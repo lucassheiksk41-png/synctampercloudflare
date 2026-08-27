@@ -25,13 +25,13 @@
     // ⚙️ SUAS CONFIGURAÇÕES INTELIGENTES (Altere os textos entre aspas)
     // =========================================================================
     // 🟣 PADRÃO PARA O BOB PLAYER:
-    const BOB_DNS = "http://bttlinkcon.sbs:8880";
-    const BOB_NOME = "Lista 1 - BTV";
+    const BOB_DNS = "http://sharklink.sbs:80";
+    const BOB_NOME = "Lista 1 - SHARK";
     const BOB_FMT = "m3u8";
 
     // 🟢🔴🔵 PADRÃO PARA IBO, IBO PRO E SMART ONE:
-    const OUTROS_DNS = "http://SEU-LINK-PARA-IBOS-AQUI.com";
-    const OUTROS_NOME = "Lista VIP";
+    const OUTROS_DNS = "http://sharklinkib.sbs:80";
+    const OUTROS_NOME = "LISTA 1 - SHARK";
     const OUTROS_FMT = "m3u8";
     // =========================================================================
 
