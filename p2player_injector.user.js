@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         INJETOR P2 PLAYER CLOUDFLARE
 // @namespace    http://tampermonkey.net/
-// @version      6.1
+// @version      6.2
 // @description  Armadura de Titânio Anti-CSS + Troca Automática de URL
 // @author       Você & Omini
 // @match        *://painel.p2player.top/*
