@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         INJETOR P2 PLAYER CLOUDFLARE
 // @namespace    http://tampermonkey.net/
-// @version      6.5
+// @version      6.6
 // @description  Armadura de Titânio + Troca Inteligente DNS 1 e DNS 2
 // @author       Você & Omini
 // @match        *://painel.p2player.top/*
@@ -26,11 +26,11 @@
     // =========================================================================
     // 🟣 PADRÃO PARA O BOB PLAYER:
     const BOB_DNS1 = "http://bttlinkcon.sbs:8880";
-    const BOB_NOME1 = "Lista 1 - BTV";
+    const BOB_NOME1 = "Lista 1 - SHARK";
     const BOB_FMT1 = "m3u8";
 
     const BOB_DNS2 = "http://masterlinkup.sbs:80"; // Coloque seu DNS 2 do BOB aqui
-    const BOB_NOME2 = "LISTA 2 MASTER";
+    const BOB_NOME2 = "LISTA 2 - MASTER";
     const BOB_FMT2 = "ts";
 
     // 🟢🔴🔵 PADRÃO PARA IBO, IBO PRO E SMART ONE:
@@ -102,7 +102,7 @@
 
         painel.innerHTML = `
             <div id="hub-header" style="background: linear-gradient(90deg, #2e1065, #6b21a8); font-weight: 900; font-size: 11px; border-radius: 7px 7px 0 0; text-align: center; color: #f97316; text-shadow: 0 0 5px #f97316;">
-                <span>🚀 ROCKET HUB v6.5 (ARMADURA)</span>
+                <span>🚀 ROCKET HUB v6.6 (ARMADURA)</span>
             </div>
             <div id="hub-body" style="padding: 6px; display: flex; flex-direction: column; gap: 5px;">
                 <div style="display: flex; gap: 4px; align-items: center;">
