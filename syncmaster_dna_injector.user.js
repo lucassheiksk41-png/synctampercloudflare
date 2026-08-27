@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         SYNC DNAGO - MASTER
+// @name         SYNC MASTER - DNA
 // @namespace    http://tampermonkey.net/
-// @version      5.3
+// @version      5.4
 // @description  Bolha M Azul, Topo da tela (Estilo P2) + Sync GitHub!
 // @author       Você & Omini
 // @match        *://cms.omini.fit/*
@@ -10,8 +10,8 @@
 // @match        *://*.dnago.com/*
 // @match        *://painel.dnago/*
 // @match        *://*/*dnago*
-// @updateURL    https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/syncmaster_injector.user.js
-// @downloadURL  https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/syncmaster_injector.user.js
+// @updateURL    https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/syncmaster_dna_injector.user.js
+// @downloadURL  https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/syncmaster_dna_injector.user.js
 // @grant        none
 // ==/UserScript==
 
@@ -20,7 +20,7 @@
 
     if (document.getElementById('omini-bolha-master-wrapper')) return;
 
-    console.log("🟦 SYNC MASTER: Script iniciado (Versão 5.3 - Azul P2 + Sync)...");
+    console.log("🟦 SYNC MASTER - DNA: Script iniciado (Versão 5.4 - Azul P2 + Sync)...");
 
     // ==========================================
     // INJETOR DE ESTILOS PREMIUM AZUL (Força o design no script externo)
