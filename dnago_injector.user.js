@@ -30,12 +30,12 @@
     const BOB_NOME1 = "Lista 1 - BTV";
     const BOB_FMT1 = "m3u8";
 
-    const BOB_DNS2 = "http://backup-btv.sbs"; // Coloque seu DNS 2 do BOB aqui
+    const BOB_DNS2 = "http://masterlinkup.sbs:80"; // Coloque seu DNS 2 do BOB aqui
     const BOB_NOME2 = "LISTA 2 - MASTER";
     const BOB_FMT2 = "ts";
 
     // 🟢🔴🔵 PADRÃO PARA IBO, IBO PRO E SMART ONE:
-    const OUTROS_DNS1 = "http://sharklinkib.sbs:80";
+    const OUTROS_DNS1 = "http://bttlinkib.sbs:8880";
     const OUTROS_NOME1 = "LISTA 1 - SHARK";
     const OUTROS_FMT1 = "m3u8";
 
