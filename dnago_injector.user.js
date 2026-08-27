@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         INJETOR DNA-GO CLOUDFLARE (v6.0 - Visual P2 Premium)
+// @name         INJETOR DNA-GO CLOUDFLARE (v6.1 - Anti-Trava React)
 // @namespace    http://tampermonkey.net/
-// @version      6.0
-// @description  Mesmo visual do P2 + Visor IBO PRO Corrigido + Sync GitHub!
+// @version      6.1
+// @description  Mesmo visual do P2 + Visor IBO PRO Corrigido (Bypass Botão Cinza)
 // @author       Você & Omini
 // @match        *://cms.omini.fit/*
 // @match        *://*.omini.fit/*
@@ -23,53 +23,64 @@
     'use strict';
 
     // =========================================================================
-    // 1. MÓDULO VISOR (LÊ A URL, PREENCHE OS DADOS, VENCE O NAVEGADOR E PARA)
+    // 1. MÓDULO VISOR (BYPASS NATIVO REACT / ANTI-AUTOCOMPLETAR)
     // =========================================================================
     if (window.location.href.includes('omini_verify=1')) {
-        console.log("🟣 OMINI: Modo Visor Ativado. Lendo URL e travando autocompletar...");
+        console.log("🟣 OMINI: Modo Visor Ativado. Aplicando Bypass de digitação humana...");
         
         const urlParams = new URLSearchParams(window.location.search);
         const urlMac = urlParams.get('mac');
         const urlKey = urlParams.get('key');
 
+        // Função mágica para enganar sistemas React/Vue simulando digitação real
+        const setNativeValue = (element, value) => {
+            const valueSetter = Object.getOwnPropertyDescriptor(element, 'value').set;
+            const prototype = Object.getPrototypeOf(element);
+            const prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
+
+            if (valueSetter && valueSetter !== prototypeValueSetter) {
+                prototypeValueSetter.call(element, value);
+            } else {
+                valueSetter.call(element, value);
+            }
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+            element.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
         if (urlMac) {
             let tentativas = 0;
-            // Tenta preencher a cada meio segundo (durante 3 segundos) para vencer o "autocompletar" do navegador
+            // Insiste por 3 segundos para garantir que venceu o carregamento da página
             let timerPreenchimento = setInterval(() => {
                 tentativas++;
                 
-                // Pega todos os campos de texto na tela do IBO Pro / IBO / BOB
                 let inputs = document.querySelectorAll('input[type="text"], input[type="password"]');
                 
                 if (inputs.length >= 2) {
-                    let macInput = inputs[0]; // O primeiro geralmente é o MAC
-                    let keyInput = inputs[1]; // O segundo geralmente é a Key
+                    let macInput = inputs[0];
+                    let keyInput = inputs[1];
 
-                    if (macInput) {
-                        macInput.value = urlMac;
-                        macInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                    if (keyInput && urlKey) {
-                        keyInput.value = urlKey;
-                        keyInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
+                    if (macInput && macInput.value !== urlMac) setNativeValue(macInput, urlMac);
+                    if (keyInput && urlKey && keyInput.value !== urlKey) setNativeValue(keyInput, urlKey);
+                    
+                    // Tenta acender o botão de login forçadamente caso o site resista
+                    let btnLogin = document.querySelector('button[type="submit"], button.btn');
+                    if (btnLogin && btnLogin.disabled) btnLogin.disabled = false;
                 }
 
                 if (tentativas >= 6) {
                     clearInterval(timerPreenchimento);
-                    console.log("🟣 OMINI: Preenchimento do Visor finalizado. Aguardando clique do usuário.");
+                    console.log("🟣 OMINI: Preenchimento concluído. O botão deve estar ativo.");
                 }
             }, 500);
         }
         
-        // Retorna aqui para ELE NÃO CARREGAR O PAINEL DO DNA-GO na tela de login
-        return; 
+        return; // Retorna para não carregar o painel do DNA-GO por cima da tela de login
     }
 
     // =========================================================================
     // 2. MÓDULO INJETOR DNA-GO (CÓDIGO PRINCIPAL)
     // =========================================================================
-    console.log("🟣 OMINI HUB DNA-GO: Script iniciado (Versão 6.0 - Visual Premium)...");
+    console.log("🟣 OMINI HUB DNA-GO: Script iniciado (Versão 6.1 - Visual Premium)...");
 
     const WORKER_MOTOR = "https://motoriboebobinjetor.lucassheiksk41.workers.dev";
     const WORKER_ESCRAVO = "https://motorescravo.lucassheiksk41.workers.dev";
@@ -94,7 +105,7 @@
 
         painel.innerHTML = `
             <div id="hub-header" style="background: linear-gradient(90deg, #2e1065, #6b21a8); padding: 4px; font-weight: 900; font-size: 11px; border-radius: 7px 7px 0 0; text-align: center; color: #f97316; text-shadow: 0 0 5px #f97316;">
-                <span>🧬 DNA-GO HUB v6.0 (CF PAID)</span>
+                <span>🧬 DNA-GO HUB v6.1 (CF PAID)</span>
             </div>
             <div id="hub-body" style="padding: 6px; display: flex; flex-direction: column; gap: 5px;">
                 <div style="display: flex; gap: 4px;">
