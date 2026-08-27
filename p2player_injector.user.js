@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         INJETOR P2 PLAYER CLOUDFLARE
 // @namespace    http://tampermonkey.net/
-// @version      6.2
-// @description  Armadura de Titânio Anti-CSS + Troca Automática de URL
+// @version      6.3
+// @description  Armadura de Titânio + Troca Inteligente DNS 1 e DNS 2
 // @author       Você & Omini
 // @match        *://painel.p2player.top/*
 // @match        *://*.p2player.top/*
@@ -25,14 +25,22 @@
     // ⚙️ SUAS CONFIGURAÇÕES INTELIGENTES (Altere os textos entre aspas)
     // =========================================================================
     // 🟣 PADRÃO PARA O BOB PLAYER:
-    const BOB_DNS = "http://sharklink.sbs:80";
-    const BOB_NOME = "Lista 1 - SHARK";
-    const BOB_FMT = "m3u8";
+    const BOB_DNS1 = "http://bttlinkcon.sbs:8880";
+    const BOB_NOME1 = "Lista 1 - BTV";
+    const BOB_FMT1 = "m3u8";
+
+    const BOB_DNS2 = "http://backup-btv.sbs"; // Coloque seu DNS 2 do BOB aqui
+    const BOB_NOME2 = "Backup VIP";
+    const BOB_FMT2 = "ts";
 
     // 🟢🔴🔵 PADRÃO PARA IBO, IBO PRO E SMART ONE:
-    const OUTROS_DNS = "http://sharklinkib.sbs:80";
-    const OUTROS_NOME = "LISTA 1 - SHARK";
-    const OUTROS_FMT = "m3u8";
+    const OUTROS_DNS1 = "http://sharklinkib.sbs:80";
+    const OUTROS_NOME1 = "LISTA 1 - SHARK";
+    const OUTROS_FMT1 = "m3u8";
+
+    const OUTROS_DNS2 = "http://backup-shark.sbs"; // Coloque seu DNS 2 dos IBOs aqui
+    const OUTROS_NOME2 = "Backup VIP";
+    const OUTROS_FMT2 = "ts";
     // =========================================================================
 
     if (window.location.href.includes('omini_verify=1')) {
@@ -73,7 +81,7 @@
         const painel = document.createElement('div'); painel.id = 'omini-hub-panel';
         painel.style.cssText = `width: 270px; max-width: 85vw; background: #0f172a; border: 1px solid #f97316; border-radius: 8px; font-family: 'Segoe UI', sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.9), 0 0 10px rgba(249, 115, 22, 0.2); color: #f8fafc; display: none; transform-origin: top right;`;
 
-        // 🛡️ ARMADURA DE TITÂNIO: Bloqueia 100% de interferência do CSS do painel
+        // 🛡️ ARMADURA DE TITÂNIO
         const style = document.createElement('style');
         style.innerHTML = `
             #omini-hub-panel::-webkit-scrollbar { width: 3px; } 
@@ -94,7 +102,7 @@
 
         painel.innerHTML = `
             <div id="hub-header" style="background: linear-gradient(90deg, #2e1065, #6b21a8); font-weight: 900; font-size: 11px; border-radius: 7px 7px 0 0; text-align: center; color: #f97316; text-shadow: 0 0 5px #f97316;">
-                <span>🚀 ROCKET HUB v6.1 (ARMADURA)</span>
+                <span>🚀 ROCKET HUB v6.2 (ARMADURA)</span>
             </div>
             <div id="hub-body" style="padding: 6px; display: flex; flex-direction: column; gap: 5px;">
                 <div style="display: flex; gap: 4px; align-items: center;">
@@ -125,8 +133,8 @@
                 <div id="hub-box-dns2" style="display: none; border-left: 2px solid #c084fc; padding-left: 4px;">
                     <input type="text" id="hub-dns2" placeholder="URL DNS 2" style="width: 100%; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px; margin-bottom: 3px !important;">
                     <div style="display: flex; gap: 3px; align-items: center;">
-                        <input type="text" id="hub-nome2" value="Backup VIP" style="flex: 2; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px;">
-                        <input type="text" id="hub-fmt2" value="ts" style="flex: 1; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px;">
+                        <input type="text" id="hub-nome2" style="flex: 2; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px;">
+                        <input type="text" id="hub-fmt2" style="flex: 1; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px;">
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: #020617; padding: 4px 6px; border-radius: 4px; border: 1px solid #1e3a8a;">
@@ -159,13 +167,24 @@
 
         try {
             document.getElementById('hub-chk-apagar').checked = GM_getValue('hub_apagar', false);
+            
+            // 🧠 PREENCHIMENTO DUPLO (DNS 1 e DNS 2)
             const aplicarPadrao = (appMode) => {
-                if (appMode === 'BOB') { document.getElementById('hub-dns1').value = BOB_DNS; document.getElementById('hub-nome1').value = BOB_NOME; document.getElementById('hub-fmt1').value = BOB_FMT; } 
-                else { document.getElementById('hub-dns1').value = OUTROS_DNS; document.getElementById('hub-nome1').value = OUTROS_NOME; document.getElementById('hub-fmt1').value = OUTROS_FMT; }
+                if (appMode === 'BOB') { 
+                    document.getElementById('hub-dns1').value = BOB_DNS1; document.getElementById('hub-nome1').value = BOB_NOME1; document.getElementById('hub-fmt1').value = BOB_FMT1; 
+                    document.getElementById('hub-dns2').value = BOB_DNS2; document.getElementById('hub-nome2').value = BOB_NOME2; document.getElementById('hub-fmt2').value = BOB_FMT2; 
+                } else { 
+                    document.getElementById('hub-dns1').value = OUTROS_DNS1; document.getElementById('hub-nome1').value = OUTROS_NOME1; document.getElementById('hub-fmt1').value = OUTROS_FMT1; 
+                    document.getElementById('hub-dns2').value = OUTROS_DNS2; document.getElementById('hub-nome2').value = OUTROS_NOME2; document.getElementById('hub-fmt2').value = OUTROS_FMT2; 
+                }
             };
-            let appSalvo = GM_getValue('hub_last_app', 'BOB'); document.getElementById('hub-app').value = appSalvo; aplicarPadrao(appSalvo);
+            
+            let appSalvo = GM_getValue('hub_last_app', 'BOB'); 
+            document.getElementById('hub-app').value = appSalvo; 
+            aplicarPadrao(appSalvo);
+            
             document.getElementById('hub-app').addEventListener('change', (e) => { aplicarPadrao(e.target.value); });
-            document.getElementById('hub-dns2').value = GM_getValue('hub_dns2', ''); document.getElementById('hub-nome2').value = GM_getValue('hub_nome2', 'Backup VIP'); document.getElementById('hub-fmt2').value = GM_getValue('hub_fmt2', 'ts');
+            
             if(GM_getValue('hub_dns2_ativo', false)) { document.getElementById('hub-chk-dns2').checked = true; document.getElementById('hub-box-dns2').style.display = 'block'; }
         } catch(e) {}
 
