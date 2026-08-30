@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         INJETOR DNA-GO CLOUDFLARE
 // @namespace    http://tampermonkey.net/
-// @version      6.7.1
-// @description  Armadura de Titânio + Troca Inteligente DNS 1 e DNS 2 (Fix MAC Alfanumérico)
+// @version      6.7.2
+// @description  Armadura de Titânio + Fix Letra O em MACs Alfanuméricos
 // @author       Você & Omini
 // @match        *://cms.omini.fit/*
 // @match        *://*.omini.fit/*
@@ -193,16 +193,18 @@
             const status = document.getElementById('hub-cloud-dados'); const appSelecionado = document.getElementById('hub-app').value;
             status.innerHTML = `<i style="color:#f97316;">Lendo painel DNA-GO...</i>`;
             document.getElementById('hub-mac').value = ''; document.getElementById('hub-key').value = ''; document.getElementById('hub-user').value = ''; document.getElementById('hub-pass').value = '';
+            
             let textoPaginaInteira = document.body.innerText || "";
             let matchUserDNA = textoPaginaInteira.match(/Usuário\s*\n\s*([a-zA-Z0-9]+)/i) || textoPaginaInteira.match(/Usuário[:\-\s]+([a-zA-Z0-9]+)/i); if (matchUserDNA) document.getElementById('hub-user').value = matchUserDNA[1].trim();
             let matchPassDNA = textoPaginaInteira.match(/Senha\s*\n\s*([a-zA-Z0-9]+)/i) || textoPaginaInteira.match(/Senha[:\-\s]+([a-zA-Z0-9]+)/i); if (matchPassDNA) document.getElementById('hub-pass').value = matchPassDNA[1].trim();
             let selecaoMouse = window.getSelection().toString().trim();
             let textareas = Array.from(document.querySelectorAll('textarea, input[type="text"]:not([id^="hub-"])')).map(t => t.value).join(' \n');
             let editables = Array.from(document.querySelectorAll('[contenteditable="true"]')).map(e => e.innerText).join(' \n');
-            let textoAlvo = (selecaoMouse + " \n" + textareas + " \n" + editables + " \n" + textoPaginaInteira).replace(/o/gi, '0');
+            
+            // 🔥 CORREÇÃO: Remoção do .replace(/o/gi, '0') que transformava 'qo' em 'q0'
+            let textoAlvo = (selecaoMouse + " \n" + textareas + " \n" + editables + " \n" + textoPaginaInteira);
             textoAlvo = textoAlvo.replace(/,/g, ' ').split(/[\s\n\r]+/).filter(p => p.split(':').length <= 6).join(' ');
             
-            // 🔪 CIRURGIA OMINI: a-zA-Z0-9 em vez de a-fA-F0-9 para pegar MACs misturados com Q, O, I, K...
             let paresEncontrados = []; let macRegex = /\b(?:[a-zA-Z0-9][:\-]?){11}[a-zA-Z0-9]\b/gi; let m;
             while ((m = macRegex.exec(textoAlvo)) !== null) {
                 let macL = m[0].replace(/[^a-zA-Z0-9]/gi, '').toLowerCase().match(/.{1,2}/g).join(':'); let end = m.index + m[0].length + 80;
