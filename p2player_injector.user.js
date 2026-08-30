@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         INJETOR P2 PLAYER CLOUDFLARE
 // @namespace    http://tampermonkey.net/
-// @version      6.6
+// @version      6.7
 // @description  Armadura de Titânio + Troca Inteligente DNS 1 e DNS 2
 // @author       Você & Omini
 // @match        *://painel.p2player.top/*
@@ -25,21 +25,21 @@
     // ⚙️ SUAS CONFIGURAÇÕES INTELIGENTES (Altere os textos entre aspas)
     // =========================================================================
     // 🟣 PADRÃO PARA O BOB PLAYER:
-    const BOB_DNS1 = "http://bttlinkcon.sbs:8880";
-    const BOB_NOME1 = "Lista 1 - SHARK";
+    const BOB_DNS1 = "http://sharklink.sbs";
+    const BOB_NOME1 = "Rocket - SHARK";
     const BOB_FMT1 = "m3u8";
 
     const BOB_DNS2 = "http://masterlinkup.sbs:80"; // Coloque seu DNS 2 do BOB aqui
-    const BOB_NOME2 = "LISTA 2 - MASTER";
+    const BOB_NOME2 = "Rocket - Master";
     const BOB_FMT2 = "ts";
 
     // 🟢🔴🔵 PADRÃO PARA IBO, IBO PRO E SMART ONE:
     const OUTROS_DNS1 = "http://sharklinkib.sbs:80";
-    const OUTROS_NOME1 = "LISTA 1 - SHARK";
+    const OUTROS_NOME1 = "Rocket - SHARK";
     const OUTROS_FMT1 = "m3u8";
 
     const OUTROS_DNS2 = "http://masterlinkup.sbs:80"; // Coloque seu DNS 2 dos IBOs aqui
-    const OUTROS_NOME2 = "LISTA 2 - MASTER";
+    const OUTROS_NOME2 = "Rocket - Master";
     const OUTROS_FMT2 = "ts";
     // =========================================================================
 
@@ -102,7 +102,7 @@
 
         painel.innerHTML = `
             <div id="hub-header" style="background: linear-gradient(90deg, #2e1065, #6b21a8); font-weight: 900; font-size: 11px; border-radius: 7px 7px 0 0; text-align: center; color: #f97316; text-shadow: 0 0 5px #f97316;">
-                <span>🚀 ROCKET HUB v6.6 (ARMADURA)</span>
+                <span>🚀 ROCKET HUB v6.7 (ARMADURA)</span>
             </div>
             <div id="hub-body" style="padding: 6px; display: flex; flex-direction: column; gap: 5px;">
                 <div style="display: flex; gap: 4px; align-items: center;">
@@ -133,7 +133,7 @@
                 <div id="hub-box-dns2" style="display: none; border-left: 2px solid #c084fc; padding-left: 4px;">
                     <input type="text" id="hub-dns2" placeholder="URL DNS 2" style="width: 100%; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px; margin-bottom: 3px !important;">
                     <div style="display: flex; gap: 3px; align-items: center;">
-                        <input type="text" id="hub-nome2" style="flex: 2; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px;">
+                        <input type="text" id="hub-nome2" style="flex: 2; background: #1e293b; color: white7 border: 1px solid #334155; border-radius: 4px; font-size: 10px;">
                         <input type="text" id="hub-fmt2" style="flex: 1; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px;">
                     </div>
                 </div>
