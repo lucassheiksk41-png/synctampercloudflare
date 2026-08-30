@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         INJETOR DNA-GO CLOUDFLARE
 // @namespace    http://tampermonkey.net/
-// @version      6.7
-// @description  Armadura de Titânio + Troca Inteligente DNS 1 e DNS 2
+// @version      6.7.1
+// @description  Armadura de Titânio + Troca Inteligente DNS 1 e DNS 2 (Fix MAC Alfanumérico)
 // @author       Você & Omini
 // @match        *://cms.omini.fit/*
 // @match        *://*.omini.fit/*
@@ -67,7 +67,7 @@
                 if (tentativas >= 6) clearInterval(timerPreenchimento);
             }, 500);
         }
-        return; 
+        return;
     }
 
     const WORKER_MOTOR = "https://motoriboebobinjetor.lucassheiksk41.workers.dev";
@@ -85,9 +85,9 @@
         // 🛡️ ARMADURA DE TITÂNIO
         const style = document.createElement('style');
         style.innerHTML = `
-            #omini-hub-panel-dnago::-webkit-scrollbar { width: 3px; } 
-            #omini-hub-panel-dnago::-webkit-scrollbar-track { background: #0f172a; } 
-            #omini-hub-panel-dnago::-webkit-scrollbar-thumb { background: #f97316; } 
+            #omini-hub-panel-dnago::-webkit-scrollbar { width: 3px; }
+            #omini-hub-panel-dnago::-webkit-scrollbar-track { background: #0f172a; }
+            #omini-hub-panel-dnago::-webkit-scrollbar-thumb { background: #f97316; }
             #omini-hub-panel-dnago input:focus { border-color: #f97316 !important; }
             #omini-hub-panel-dnago, #omini-hub-panel-dnago * { box-sizing: border-box !important; }
             #omini-hub-panel-dnago { height: auto !important; max-height: 85vh !important; }
@@ -168,24 +168,24 @@
 
         try {
             document.getElementById('hub-chk-apagar').checked = GM_getValue('hub_apagar', false);
-            
+
             // 🧠 PREENCHIMENTO DUPLO (DNS 1 e DNS 2)
             const aplicarPadrao = (appMode) => {
-                if (appMode === 'BOB') { 
-                    document.getElementById('hub-dns1').value = BOB_DNS1; document.getElementById('hub-nome1').value = BOB_NOME1; document.getElementById('hub-fmt1').value = BOB_FMT1; 
-                    document.getElementById('hub-dns2').value = BOB_DNS2; document.getElementById('hub-nome2').value = BOB_NOME2; document.getElementById('hub-fmt2').value = BOB_FMT2; 
-                } else { 
-                    document.getElementById('hub-dns1').value = OUTROS_DNS1; document.getElementById('hub-nome1').value = OUTROS_NOME1; document.getElementById('hub-fmt1').value = OUTROS_FMT1; 
-                    document.getElementById('hub-dns2').value = OUTROS_DNS2; document.getElementById('hub-nome2').value = OUTROS_NOME2; document.getElementById('hub-fmt2').value = OUTROS_FMT2; 
+                if (appMode === 'BOB') {
+                    document.getElementById('hub-dns1').value = BOB_DNS1; document.getElementById('hub-nome1').value = BOB_NOME1; document.getElementById('hub-fmt1').value = BOB_FMT1;
+                    document.getElementById('hub-dns2').value = BOB_DNS2; document.getElementById('hub-nome2').value = BOB_NOME2; document.getElementById('hub-fmt2').value = BOB_FMT2;
+                } else {
+                    document.getElementById('hub-dns1').value = OUTROS_DNS1; document.getElementById('hub-nome1').value = OUTROS_NOME1; document.getElementById('hub-fmt1').value = OUTROS_FMT1;
+                    document.getElementById('hub-dns2').value = OUTROS_DNS2; document.getElementById('hub-nome2').value = OUTROS_NOME2; document.getElementById('hub-fmt2').value = OUTROS_FMT2;
                 }
             };
-            
-            let appSalvo = GM_getValue('hub_last_app', 'BOB'); 
-            document.getElementById('hub-app').value = appSalvo; 
+
+            let appSalvo = GM_getValue('hub_last_app', 'BOB');
+            document.getElementById('hub-app').value = appSalvo;
             aplicarPadrao(appSalvo);
-            
+
             document.getElementById('hub-app').addEventListener('change', (e) => { aplicarPadrao(e.target.value); });
-            
+
             if(GM_getValue('hub_dns2_ativo', false)) { document.getElementById('hub-chk-dns2').checked = true; document.getElementById('hub-box-dns2').style.display = 'block'; }
         } catch(e) {}
 
@@ -201,12 +201,15 @@
             let editables = Array.from(document.querySelectorAll('[contenteditable="true"]')).map(e => e.innerText).join(' \n');
             let textoAlvo = (selecaoMouse + " \n" + textareas + " \n" + editables + " \n" + textoPaginaInteira).replace(/o/gi, '0');
             textoAlvo = textoAlvo.replace(/,/g, ' ').split(/[\s\n\r]+/).filter(p => p.split(':').length <= 6).join(' ');
-            let paresEncontrados = []; let macRegex = /\b(?:[a-fA-F0-9][:\-]?){11}[a-fA-F0-9]\b/gi; let m;
+            
+            // 🔪 CIRURGIA OMINI: a-zA-Z0-9 em vez de a-fA-F0-9 para pegar MACs misturados com Q, O, I, K...
+            let paresEncontrados = []; let macRegex = /\b(?:[a-zA-Z0-9][:\-]?){11}[a-zA-Z0-9]\b/gi; let m;
             while ((m = macRegex.exec(textoAlvo)) !== null) {
-                let macL = m[0].replace(/[^a-fA-F0-9]/gi, '').toLowerCase().match(/.{1,2}/g).join(':'); let end = m.index + m[0].length + 80;
+                let macL = m[0].replace(/[^a-zA-Z0-9]/gi, '').toLowerCase().match(/.{1,2}/g).join(':'); let end = m.index + m[0].length + 80;
                 let keyMatch = textoAlvo.substring(m.index + m[0].length, end).match(/\b\d{6}\b/);
                 if (appSelecionado === 'SMART') { if (!keyMatch) paresEncontrados.push({ mac: macL, key: "" }); } else { if (keyMatch) paresEncontrados.push({ mac: macL, key: keyMatch[0] }); }
             }
+            
             let paresUnicos = []; let vistos = new Set();
             for (let p of paresEncontrados) { let comboId = p.mac + "-" + p.key; if (!vistos.has(comboId)) { vistos.add(comboId); paresUnicos.push(p); } }
             if (paresUnicos.length > 0) {
