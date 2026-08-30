@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         INJETOR DNA-GO CLOUDFLARE
 // @namespace    http://tampermonkey.net/
-// @version      6.6
+// @version      6.7
 // @description  Armadura de Titânio + Troca Inteligente DNS 1 e DNS 2
 // @author       Você & Omini
 // @match        *://cms.omini.fit/*
@@ -27,20 +27,20 @@
     // =========================================================================
     // 🟣 PADRÃO PARA O BOB PLAYER:
     const BOB_DNS1 = "http://bttlinkcon.sbs:8880";
-    const BOB_NOME1 = "Lista 1 - BTV";
+    const BOB_NOME1 = "Rocket - BTV";
     const BOB_FMT1 = "m3u8";
 
     const BOB_DNS2 = "http://masterlinkup.sbs:80"; // Coloque seu DNS 2 do BOB aqui
-    const BOB_NOME2 = "LISTA 2 - MASTER";
+    const BOB_NOME2 = "Rocket - Master";
     const BOB_FMT2 = "ts";
 
     // 🟢🔴🔵 PADRÃO PARA IBO, IBO PRO E SMART ONE:
     const OUTROS_DNS1 = "http://bttlinkib.sbs:8880";
-    const OUTROS_NOME1 = "LISTA 1 - SHARK";
+    const OUTROS_NOME1 = "Rocket - BTV";
     const OUTROS_FMT1 = "m3u8";
 
     const OUTROS_DNS2 = "http://masterlinkup.sbs:80"; // Coloque seu DNS 2 dos IBOs aqui
-    const OUTROS_NOME2 = "LISTA 2 - MASTER";
+    const OUTROS_NOME2 = "Rocket - Master";
     const OUTROS_FMT2 = "ts";
     // =========================================================================
 
