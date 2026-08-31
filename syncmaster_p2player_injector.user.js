@@ -2,27 +2,25 @@
 // @name         SYNC MASTER - P2PLAYER
 // @namespace    http://tampermonkey.net/
 // @version      2.0
-// @description  Bolha M Neon (P2) + Botão Sniper Integrado na Tabela
+// @description  Bolha M Neon + Botão Sniper Integrado (Nativo)
 // @author       Você & Omini
 // @match        *://painel.p2player.top/*
 // @match        *://*.p2player.top/*
 // @match        *://*.p2-player.com/*
 // @match        *://p2-player.com/*
-// @updateURL    https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/syncmaster_p2player_injector.user.js
-// @downloadURL  https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/syncmaster_p2player_injector.user.js
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    // ⚠️ COLOQUE O SEU NOVO WORKER DO P2 AQUI (TIPO O DA CLOUD, SÓ PARA DADOS POST):
-    const LINK_WORKER_P2 = 'https://syncmaster.lucassheiksk41.workers.dev/';
+    // 🎯 O SEU WORKER DO P2 PLAYER JÁ ESTÁ AQUI:
+    const LINK_WORKER_P2 = 'https://syncmaster.lucassheiksk41.workers.dev';
 
-    console.log("🔮 ROCKET SYNC: Script iniciado (v2.0 - Sniper Acoplado + Bolha)...");
+    console.log("🔮 ROCKET SYNC: Script P2 (v2.0 - Sniper Nativo + Bolha) ativado...");
 
     // ==============================================================
-    // 1. O MOTOR DE EXTRAÇÃO ORIGINAL (Para quando clica na Bolha)
+    // 1. O MOTOR DE EXTRAÇÃO ORIGINAL (Usado pela Bolha M na Edição)
     // ==============================================================
     function extrairDadosDaPagina() {
         let txt = document.body.innerText;
@@ -72,11 +70,12 @@
     }
 
     // ==============================================================
-    // 2. A INTERFACE MASTERX 
+    // 2. A INTERFACE MASTERX (Renderização Nativa)
     // ==============================================================
     function abrirJanelaSync(dadosInjetados) {
         if(document.getElementById('masterx-sync-overlay')) return;
         
+        // Usa os dados do Sniper se existirem, senão roda a extração da página
         let dados = dadosInjetados || extrairDadosDaPagina();
         
         const o = document.createElement('div');
@@ -115,13 +114,13 @@
             <button id="mx-btn-editar" style="padding:12px;border:none;border-radius:8px;background:#ff8c00;color:#fff;font-weight:bold;cursor:pointer;">✏️ EDITAR</button>
             <button id="mx-btn-deletar" style="padding:12px;border:none;border-radius:8px;background:#d32f2f;color:#fff;font-weight:bold;cursor:pointer;">🗑️ APAGAR</button>
           </div>
-          <button id="mx-btn-fechar-painel" style="width:100%;padding:12px;border:1px solid #555;border-radius:8px;background:transparent;color:#aaa;cursor:pointer;">❌ Fechar</button>
+          <button id="mx-btn-fechar-modal" style="width:100%;padding:12px;border:1px solid #555;border-radius:8px;background:transparent;color:#aaa;cursor:pointer;">❌ Fechar</button>
           <div id="mx-status" style="margin-top:15px;font-size:14px;font-weight:bold;"></div>
         `;
         
         o.appendChild(m); document.body.appendChild(o);
         
-        document.getElementById('mx-btn-fechar-painel').onclick = () => {
+        document.getElementById('mx-btn-fechar-modal').onclick = () => {
             o.remove();
             resetarBolha();
         };
@@ -129,12 +128,6 @@
         function acaoMasterX(t) {
             const s = document.getElementById('mx-status'); 
             s.innerHTML = '⏳ Processando...'; s.style.color = '#ffeb3b';
-            
-            if (LINK_WORKER_P2.includes("COLOQUE_AQUI")) {
-                s.innerHTML = '❌ ERRO: Coloque o Link do Worker na Linha 20!';
-                s.style.color = '#ff4444';
-                return;
-            }
 
             const p = {
                 acao: t,
@@ -160,7 +153,7 @@
                     }
                 },
                 onerror: function(error) {
-                    s.innerHTML = '❌ Conexão Bloqueada. Verifique o Link do Worker.'; 
+                    s.innerHTML = '❌ Conexão Bloqueada. Verifique o Worker.'; 
                     s.style.color = '#ff4444';
                 }
             });
@@ -173,15 +166,17 @@
     }
 
     // ==============================================================
-    // 3. NOVO MÓDULO: INJEÇÃO SNIPER NA TABELA P2
+    // 3. O MÓDULO SNIPER (Para a tabela do P2 Player)
     // ==============================================================
     function injetarBotoesSniperP2() {
         let linhas = document.querySelectorAll('table tbody tr');
         
         linhas.forEach(linha => {
             let colunas = linha.querySelectorAll('td');
+            // Estrutura do P2 geralmente tem 5 ou mais colunas
             if (colunas.length >= 5 && !linha.querySelector('.btn-sniper-sync')) {
                 
+                // O botão de ações fica na última coluna visível (ou índice 4)
                 let colunaAcoes = colunas[4] || colunas[colunas.length - 1];
                 let divBotoes = colunaAcoes.querySelector('.btn-group') || colunaAcoes;
                 
@@ -194,6 +189,7 @@
                     e.preventDefault();
                     e.stopPropagation();
                     
+                    // USUÁRIO (Coluna 0)
                     let usuario = '';
                     let userLink = colunas[0].querySelector("a");
                     if (userLink) {
@@ -202,26 +198,30 @@
                         usuario = colunas[0].innerText.split('\n')[0].trim();
                     }
                     
+                    // VENCIMENTO (Coluna 1)
                     let expTexto = colunas[1].innerText.trim();
                     let expFormatada = '';
                     let matchData = expTexto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
                     if (matchData) {
+                        // Aplica o +1 dia do MasterX
                         let d = new Date(matchData[3], parseInt(matchData[2]) - 1, parseInt(matchData[1]) + 1);
                         expFormatada = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
                     }
                     
+                    // NOME / NOTAS (Coluna 4)
                     let cloneCol4 = colunas[4].cloneNode(true);
                     let botoesLixo = cloneCol4.querySelectorAll('button, a, .btn-group, i');
-                    botoesLixo.forEach(b => b.remove());
+                    botoesLixo.forEach(b => b.remove()); // Tira o texto dos botões originais
                     let notasApenas = cloneCol4.innerText.replace(/Adicionado.*?confiança/gi, '').replace(/\n/g, ' ').trim();
                     notasApenas = notasApenas.replace(/\s{2,}/g, ' ');
                     
                     let comentario = notasApenas || `P2 ${usuario}`;
                     
+                    // A SENHA É IGUAL AO USUÁRIO 
                     let senha = usuario; 
                     
                     abrirJanelaSync({usuario, senha, expFormatada, comentario});
-                    document.getElementById('omini-bolha-p2-btn').click(); // Força a bolha a mostrar o "X" vermelho
+                    bolhaEstadoAberto(); // Troca a Bolha para '❌'
                 };
                 
                 divBotoes.appendChild(btn);
@@ -230,7 +230,7 @@
     }
 
     // ==============================================================
-    // 4. A BOLHA M NEON (Estilo P2 Original)
+    // 4. ESTADOS DA BOLHA M E INJEÇÃO
     // ==============================================================
     function bolhaEstadoAberto() {
         let bolha = document.getElementById('omini-bolha-p2-btn');
@@ -282,7 +282,7 @@
                 janelaAberta.remove();
                 resetarBolha();
             } else {
-                abrirJanelaSync();
+                abrirJanelaSync(); // Abre extraindo os dados da tela de Edição
                 bolhaEstadoAberto();
             }
         };
@@ -291,14 +291,11 @@
         document.body.appendChild(wrapper);
     }
 
-    // Tenta injetar logo no início
-    setTimeout(injetarBolha, 500);
-
     // 5. CÃO DE GUARDA
     setInterval(() => {
         if (!document.body) return;
         injetarBolha(); 
-        injetarBotoesSniperP2(); 
+        injetarBotoesSniperP2(); // Adiciona os botões na tabela
 
         let bolha = document.getElementById('omini-bolha-p2-btn');
         let janelaAberta = document.getElementById('masterx-sync-overlay');
@@ -306,5 +303,5 @@
         if (bolha && bolha.innerHTML.includes('❌') && !janelaAberta) {
             resetarBolha();
         }
-    }, 800);
+    }, 1000);
 })();
