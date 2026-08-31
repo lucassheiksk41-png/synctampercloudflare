@@ -14,8 +14,8 @@
 (function() {
     'use strict';
 
-    // 🎯 O SEU WORKER DO P2 PLAYER JÁ ESTÁ AQUI:
-    const LINK_WORKER_P2 = 'https://syncmaster.lucassheiksk41.workers.dev';
+    // 🎯 O SEU NOVO WORKER DO P2 PLAYER JÁ ESTÁ AQUI:
+    const LINK_WORKER_P2 = 'https://syncp2master.lucassheiksk41.workers.dev';
 
     console.log("🔮 ROCKET SYNC: Script P2 (v2.0 - Sniper Nativo + Bolha) ativado...");
 
