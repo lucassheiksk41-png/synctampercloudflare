@@ -27,7 +27,7 @@
     // 🟣 PADRÃO PARA O BOB PLAYER:
     const BOB_DNS1 = "http://sharklink.sbs";
     const BOB_NOME1 = "Rocket - SHARK";
-    const BOB_FMT1 = "m3u8";
+    const BOB_FMT1 = "ts";
 
     const BOB_DNS2 = "http://masterlinkup.sbs:80"; // Coloque seu DNS 2 do BOB aqui
     const BOB_NOME2 = "Rocket - Master";
@@ -36,7 +36,7 @@
     // 🟢🔴🔵 PADRÃO PARA IBO, IBO PRO E SMART ONE:
     const OUTROS_DNS1 = "http://sharklinkib.sbs:80";
     const OUTROS_NOME1 = "Rocket - SHARK";
-    const OUTROS_FMT1 = "m3u8";
+    const OUTROS_FMT1 = "ts";
 
     const OUTROS_DNS2 = "http://masterlinkup.sbs:80"; // Coloque seu DNS 2 dos IBOs aqui
     const OUTROS_NOME2 = "Rocket - Master";
