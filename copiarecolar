@@ -1,19 +1,20 @@
 // ==UserScript==
-// @name         INJETOR P2 PLAYER CLOUDFLARE
+// @name         INJETOR DNA-GO CLOUDFLARE
 // @namespace    http://tampermonkey.net/
-// @version      6.7
-// @description  Armadura de Titânio + Troca Inteligente DNS 1 e DNS 2
+// @version      6.7.2
+// @description  Armadura de Titânio + Fix Letra O em MACs Alfanuméricos
 // @author       Você & Omini
-// @match        *://painel.p2player.top/*
-// @match        *://*.p2player.top/*
-// @match        *://p2player.top/*
-// @match        *://*.p2-player.com/*
-// @match        *://p2-player.com/*
+// @match        *://cms.omini.fit/*
+// @match        *://*.omini.fit/*
+// @match        *://*.dna-go.com/*
+// @match        *://*.dnago.com/*
+// @match        *://painel.dnago/*
+// @match        *://*/*dnago*
 // @match        *://*.bobplayer.com/*
 // @match        *://*.iboplayer.com/*
 // @match        *://*.iboproapp.com/*
-// @updateURL    https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/p2player_injector.user.js
-// @downloadURL  https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/p2player_injector.user.js
+// @updateURL    https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/dnago_injector.user.js
+// @downloadURL  https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/dnago_injector.user.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // ==/UserScript==
@@ -25,21 +26,21 @@
     // ⚙️ SUAS CONFIGURAÇÕES INTELIGENTES (Altere os textos entre aspas)
     // =========================================================================
     // 🟣 PADRÃO PARA O BOB PLAYER:
-    const BOB_DNS1 = "http://sharklink.sbs";
-    const BOB_NOME1 = "Lista 1 - SHARK";
-    const BOB_FMT1 = "ts";
+    const BOB_DNS1 = "http://bttlinkcon.sbs:8880";
+    const BOB_NOME1 = "Rocket - BTV";
+    const BOB_FMT1 = "m3u8";
 
     const BOB_DNS2 = "http://masterlinkup.sbs:80"; // Coloque seu DNS 2 do BOB aqui
-    const BOB_NOME2 = "Lista 2 - Master";
+    const BOB_NOME2 = "Rocket - Master";
     const BOB_FMT2 = "ts";
 
     // 🟢🔴🔵 PADRÃO PARA IBO, IBO PRO E SMART ONE:
-    const OUTROS_DNS1 = "http://sharklinkib.sbs:80";
-    const OUTROS_NOME1 = "Lista 1 - SHARK";
-    const OUTROS_FMT1 = "ts";
+    const OUTROS_DNS1 = "http://bttlinkib.sbs:8880";
+    const OUTROS_NOME1 = "Rocket - BTV";
+    const OUTROS_FMT1 = "m3u8";
 
     const OUTROS_DNS2 = "http://masterlinkup.sbs:80"; // Coloque seu DNS 2 dos IBOs aqui
-    const OUTROS_NOME2 = "Lista 2 - Master";
+    const OUTROS_NOME2 = "Rocket - Master";
     const OUTROS_FMT2 = "ts";
     // =========================================================================
 
@@ -66,7 +67,7 @@
                 if (tentativas >= 6) clearInterval(timerPreenchimento);
             }, 500);
         }
-        return; 
+        return;
     }
 
     const WORKER_MOTOR = "https://motoriboebobinjetor.lucassheiksk41.workers.dev";
@@ -75,23 +76,23 @@
     let roletaMemoria = { hash: "", pares: [], index: 0 };
 
     function criarPainelHub() {
-        if (!document.body || document.getElementById('omini-wrapper')) return;
-        const wrapper = document.createElement('div'); wrapper.id = 'omini-wrapper';
+        if (!document.body || document.getElementById('omini-wrapper-dnago')) return;
+        const wrapper = document.createElement('div'); wrapper.id = 'omini-wrapper-dnago';
         wrapper.style.cssText = `position: fixed !important; top: 70px !important; right: 15px !important; z-index: 2147483647 !important; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;`;
-        const painel = document.createElement('div'); painel.id = 'omini-hub-panel';
+        const painel = document.createElement('div'); painel.id = 'omini-hub-panel-dnago';
         painel.style.cssText = `width: 270px; max-width: 85vw; background: #0f172a; border: 1px solid #f97316; border-radius: 8px; font-family: 'Segoe UI', sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.9), 0 0 10px rgba(249, 115, 22, 0.2); color: #f8fafc; display: none; transform-origin: top right;`;
 
         // 🛡️ ARMADURA DE TITÂNIO
         const style = document.createElement('style');
         style.innerHTML = `
-            #omini-hub-panel::-webkit-scrollbar { width: 3px; } 
-            #omini-hub-panel::-webkit-scrollbar-track { background: #0f172a; } 
-            #omini-hub-panel::-webkit-scrollbar-thumb { background: #f97316; } 
-            #omini-hub-panel input:focus { border-color: #f97316 !important; }
-            #omini-hub-panel, #omini-hub-panel * { box-sizing: border-box !important; }
-            #omini-hub-panel { height: auto !important; max-height: 85vh !important; }
-            #omini-hub-panel div { height: auto !important; max-height: none !important; min-height: 0 !important; }
-            #omini-hub-panel input, #omini-hub-panel select, #omini-hub-panel button {
+            #omini-hub-panel-dnago::-webkit-scrollbar { width: 3px; }
+            #omini-hub-panel-dnago::-webkit-scrollbar-track { background: #0f172a; }
+            #omini-hub-panel-dnago::-webkit-scrollbar-thumb { background: #f97316; }
+            #omini-hub-panel-dnago input:focus { border-color: #f97316 !important; }
+            #omini-hub-panel-dnago, #omini-hub-panel-dnago * { box-sizing: border-box !important; }
+            #omini-hub-panel-dnago { height: auto !important; max-height: 85vh !important; }
+            #omini-hub-panel-dnago div { height: auto !important; max-height: none !important; min-height: 0 !important; }
+            #omini-hub-panel-dnago input, #omini-hub-panel-dnago select, #omini-hub-panel-dnago button {
                 height: 26px !important; max-height: 26px !important; min-height: 26px !important;
                 padding: 0 6px !important; margin: 0 !important; line-height: normal !important; outline: none !important;
             }
@@ -102,7 +103,7 @@
 
         painel.innerHTML = `
             <div id="hub-header" style="background: linear-gradient(90deg, #2e1065, #6b21a8); font-weight: 900; font-size: 11px; border-radius: 7px 7px 0 0; text-align: center; color: #f97316; text-shadow: 0 0 5px #f97316;">
-                <span>🚀 ROCKET HUB v6.7 (ARMADURA)</span>
+                <span>🧬 DNA-GO HUB v6.6 (ARMADURA)</span>
             </div>
             <div id="hub-body" style="padding: 6px; display: flex; flex-direction: column; gap: 5px;">
                 <div style="display: flex; gap: 4px; align-items: center;">
@@ -133,7 +134,7 @@
                 <div id="hub-box-dns2" style="display: none; border-left: 2px solid #c084fc; padding-left: 4px;">
                     <input type="text" id="hub-dns2" placeholder="URL DNS 2" style="width: 100%; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px; margin-bottom: 3px !important;">
                     <div style="display: flex; gap: 3px; align-items: center;">
-                        <input type="text" id="hub-nome2" style="flex: 2; background: #1e293b; color: white7 border: 1px solid #334155; border-radius: 4px; font-size: 10px;">
+                        <input type="text" id="hub-nome2" style="flex: 2; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px;">
                         <input type="text" id="hub-fmt2" style="flex: 1; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 10px;">
                     </div>
                 </div>
@@ -146,12 +147,12 @@
             </div>
         `;
 
-        const bolha = document.createElement('div'); bolha.id = 'omini-hub-bolha';
+        const bolha = document.createElement('div'); bolha.id = 'omini-hub-bolha-dnago';
         bolha.style.cssText = `width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #2e1065, #6b21a8); display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 0 15px rgba(249, 115, 22, 0.6), inset 0 0 8px rgba(249, 115, 22, 0.4); border: 2px solid #f97316; user-select: none;`;
-        bolha.innerHTML = `<span style="font-size: 20px; filter: drop-shadow(0 0 6px #f97316);">🚀</span>`;
+        bolha.innerHTML = `<span style="font-size: 20px; filter: drop-shadow(0 0 6px #f97316);">🧬</span>`;
         bolha.onclick = () => {
             if (painel.style.display === 'none') { painel.style.display = 'block'; bolha.innerHTML = `❌`; bolha.style.background = `linear-gradient(135deg, #450a0a, #991b1b)`; bolha.style.borderColor = `#ff0055`;
-            } else { painel.style.display = 'none'; bolha.innerHTML = `🚀`; bolha.style.background = `linear-gradient(135deg, #2e1065, #6b21a8)`; bolha.style.borderColor = `#f97316`; }
+            } else { painel.style.display = 'none'; bolha.innerHTML = `<span style="font-size: 20px; filter: drop-shadow(0 0 6px #f97316);">🧬</span>`; bolha.style.background = `linear-gradient(135deg, #2e1065, #6b21a8)`; bolha.style.borderColor = `#f97316`; }
         };
         wrapper.appendChild(bolha); wrapper.appendChild(painel); document.body.appendChild(wrapper);
 
@@ -167,46 +168,50 @@
 
         try {
             document.getElementById('hub-chk-apagar').checked = GM_getValue('hub_apagar', false);
-            
+
             // 🧠 PREENCHIMENTO DUPLO (DNS 1 e DNS 2)
             const aplicarPadrao = (appMode) => {
-                if (appMode === 'BOB') { 
-                    document.getElementById('hub-dns1').value = BOB_DNS1; document.getElementById('hub-nome1').value = BOB_NOME1; document.getElementById('hub-fmt1').value = BOB_FMT1; 
-                    document.getElementById('hub-dns2').value = BOB_DNS2; document.getElementById('hub-nome2').value = BOB_NOME2; document.getElementById('hub-fmt2').value = BOB_FMT2; 
-                } else { 
-                    document.getElementById('hub-dns1').value = OUTROS_DNS1; document.getElementById('hub-nome1').value = OUTROS_NOME1; document.getElementById('hub-fmt1').value = OUTROS_FMT1; 
-                    document.getElementById('hub-dns2').value = OUTROS_DNS2; document.getElementById('hub-nome2').value = OUTROS_NOME2; document.getElementById('hub-fmt2').value = OUTROS_FMT2; 
+                if (appMode === 'BOB') {
+                    document.getElementById('hub-dns1').value = BOB_DNS1; document.getElementById('hub-nome1').value = BOB_NOME1; document.getElementById('hub-fmt1').value = BOB_FMT1;
+                    document.getElementById('hub-dns2').value = BOB_DNS2; document.getElementById('hub-nome2').value = BOB_NOME2; document.getElementById('hub-fmt2').value = BOB_FMT2;
+                } else {
+                    document.getElementById('hub-dns1').value = OUTROS_DNS1; document.getElementById('hub-nome1').value = OUTROS_NOME1; document.getElementById('hub-fmt1').value = OUTROS_FMT1;
+                    document.getElementById('hub-dns2').value = OUTROS_DNS2; document.getElementById('hub-nome2').value = OUTROS_NOME2; document.getElementById('hub-fmt2').value = OUTROS_FMT2;
                 }
             };
-            
-            let appSalvo = GM_getValue('hub_last_app', 'BOB'); 
-            document.getElementById('hub-app').value = appSalvo; 
+
+            let appSalvo = GM_getValue('hub_last_app', 'BOB');
+            document.getElementById('hub-app').value = appSalvo;
             aplicarPadrao(appSalvo);
-            
+
             document.getElementById('hub-app').addEventListener('change', (e) => { aplicarPadrao(e.target.value); });
-            
+
             if(GM_getValue('hub_dns2_ativo', false)) { document.getElementById('hub-chk-dns2').checked = true; document.getElementById('hub-box-dns2').style.display = 'block'; }
         } catch(e) {}
 
         document.getElementById('hub-btn-capturar').onclick = () => {
             const status = document.getElementById('hub-cloud-dados'); const appSelecionado = document.getElementById('hub-app').value;
-            status.innerHTML = `<i style="color:#f97316;">Analisando tela...</i>`;
+            status.innerHTML = `<i style="color:#f97316;">Lendo painel DNA-GO...</i>`;
             document.getElementById('hub-mac').value = ''; document.getElementById('hub-key').value = ''; document.getElementById('hub-user').value = ''; document.getElementById('hub-pass').value = '';
-            let todosElementos = document.querySelectorAll('label, div, span');
-            todosElementos.forEach(el => {
-                let txt = el.innerText ? el.innerText.trim().toLowerCase() : '';
-                if (txt === 'usuário' || txt === 'usuário *' || txt === 'usuario') { let p = el.parentElement; let inp = p.querySelector('input:not([id^="hub-"])') || (p.parentElement ? p.parentElement.querySelector('input:not([id^="hub-"])') : null); if (inp && inp.value) document.getElementById('hub-user').value = inp.value; }
-                if (txt === 'senha' || txt === 'senha *') { let p = el.parentElement; let inp = p.querySelector('input:not([id^="hub-"])') || (p.parentElement ? p.parentElement.querySelector('input:not([id^="hub-"])') : null); if (inp && inp.value) document.getElementById('hub-pass').value = inp.value; }
-            });
-            if (!document.getElementById('hub-user').value) { let u = document.querySelector('input[name="username"], input[name*="user"]:not([id^="hub-"])'); if(u) document.getElementById('hub-user').value = u.value; }
-            if (!document.getElementById('hub-pass').value) { let p = document.querySelector('input[name="password"], input[name*="pass"]:not([id^="hub-"])'); if(p) document.getElementById('hub-pass').value = p.value; }
-            let textoAlvo = (window.getSelection().toString() + " \n" + Array.from(document.querySelectorAll('textarea:not([id^="hub-"]), input[type="text"]:not([id^="hub-"])')).map(t => t.value).join(' \n') + " \n" + Array.from(document.querySelectorAll('[contenteditable="true"]:not([id^="hub-"])')).map(e => e.innerText).join(' \n')).replace(/o/gi, '0').replace(/,/g, ' ').split(/[\s\n\r]+/).filter(p => p.split(':').length <= 6).join(' ');
-            let paresEncontrados = []; let macRegex = /\b(?:[a-fA-F0-9][:\-]?){11}[a-fA-F0-9]\b/gi; let m;
+
+            let textoPaginaInteira = document.body.innerText || "";
+            let matchUserDNA = textoPaginaInteira.match(/Usuário\s*\n\s*([a-zA-Z0-9]+)/i) || textoPaginaInteira.match(/Usuário[:\-\s]+([a-zA-Z0-9]+)/i); if (matchUserDNA) document.getElementById('hub-user').value = matchUserDNA[1].trim();
+            let matchPassDNA = textoPaginaInteira.match(/Senha\s*\n\s*([a-zA-Z0-9]+)/i) || textoPaginaInteira.match(/Senha[:\-\s]+([a-zA-Z0-9]+)/i); if (matchPassDNA) document.getElementById('hub-pass').value = matchPassDNA[1].trim();
+            let selecaoMouse = window.getSelection().toString().trim();
+            let textareas = Array.from(document.querySelectorAll('textarea, input[type="text"]:not([id^="hub-"])')).map(t => t.value).join(' \n');
+            let editables = Array.from(document.querySelectorAll('[contenteditable="true"]')).map(e => e.innerText).join(' \n');
+
+            // 🔥 CORREÇÃO: Remoção do .replace(/o/gi, '0') que transformava 'qo' em 'q0'
+            let textoAlvo = (selecaoMouse + " \n" + textareas + " \n" + editables + " \n" + textoPaginaInteira);
+            textoAlvo = textoAlvo.replace(/,/g, ' ').split(/[\s\n\r]+/).filter(p => p.split(':').length <= 6).join(' ');
+
+            let paresEncontrados = []; let macRegex = /\b(?:[a-zA-Z0-9][:\-]?){11}[a-zA-Z0-9]\b/gi; let m;
             while ((m = macRegex.exec(textoAlvo)) !== null) {
-                let macL = m[0].replace(/[^a-fA-F0-9]/gi, '').toLowerCase().match(/.{1,2}/g).join(':'); let end = m.index + m[0].length + 80;
+                let macL = m[0].replace(/[^a-zA-Z0-9]/gi, '').toLowerCase().match(/.{1,2}/g).join(':'); let end = m.index + m[0].length + 80;
                 let keyMatch = textoAlvo.substring(m.index + m[0].length, end).match(/\b\d{6}\b/);
                 if (appSelecionado === 'SMART') { if (!keyMatch) paresEncontrados.push({ mac: macL, key: "" }); } else { if (keyMatch) paresEncontrados.push({ mac: macL, key: keyMatch[0] }); }
             }
+
             let paresUnicos = []; let vistos = new Set();
             for (let p of paresEncontrados) { let comboId = p.mac + "-" + p.key; if (!vistos.has(comboId)) { vistos.add(comboId); paresUnicos.push(p); } }
             if (paresUnicos.length > 0) {
@@ -272,5 +277,5 @@
         }
         setInterval(checarNuvem, 1500); setTimeout(checarNuvem, 500);
     }
-    setInterval(() => { if (!document.getElementById('omini-wrapper')) criarPainelHub(); }, 1000);
+    setInterval(() => { if (!document.getElementById('omini-wrapper-dnago')) criarPainelHub(); }, 1000);
 })();
