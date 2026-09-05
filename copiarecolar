@@ -1,297 +1,250 @@
 // ==UserScript==
-// @name         SYNC MASTER - OPERA PLAYER (Sniper Nativo)
+// @name         SYNC MASTER - TVS (Sniper Nativo)
 // @namespace    http://tampermonkey.net/
-// @version      4.0
-// @description  Bolha M Neon + Botão Sync na Tabela (Operação Relâmpago)
+// @version      2.0
+// @description  Bolha M Roxa + Botão Sync na Tabela (Leitura Direta Anti-Erros)
 // @author       Comandante & Omini
-// @match        *://office.operak.top/*
-// @match        *://*.operak.top/*
-// @match        *://*.operaplayer.com/*
-// @match        *://operaplayer.com/*
+// @match        *://*.lookdefense.top/*
+// @match        *://lookdefense.top/*
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    // ⚠️ O SEU WORKER DO OPERA MANTIDO INTACTO:
-    const LINK_WORKER_OPERA = 'https://syncoperamaster.lucassheiksk41.workers.dev';
+    if (document.getElementById('omini-bolha-tvs-wrapper')) return;
 
-    console.log("🔮 ROCKET SYNC: Script Opera (v4.0 - Sniper Nativo + Bolha) ativado...");
+    console.log("🟪 SYNC MASTER - TVS: Script iniciado (Versão 2.0 - Sniper Nativo na Tabela)...");
 
-    // ==============================================================
-    // 1. O MOTOR DE EXTRAÇÃO ORIGINAL (Usado se abrir o cliente)
-    // ==============================================================
-    function extrairDadosDaPagina() {
-        let txt = document.body.innerText;
-        function extrair(r){ let m = txt.match(r); return m ? m[1].trim() : ''; }
+    // Mantém a memória global para compatibilidade com o Worker antigo
+    window.lastTvsData = { u: '', p: '', e: '', n: '' };
 
-        let usuario = ''; let senha = ''; let expiracaoRaw = '';
-        let comentario = ''; let expFormatada = '';
-
-        let allInputs = Array.from(document.querySelectorAll('input'));
-
-        let camposPreenchidos = allInputs.filter(i =>
-            i.type !== 'hidden' && i.type !== 'button' && i.type !== 'checkbox' && i.type !== 'search' &&
-            i.value && i.value.trim().length >= 2 &&
-            (!i.placeholder || !i.placeholder.toLowerCase().includes('pesquisa')) &&
-            !i.value.toLowerCase().includes('concordo') &&
-            !i.value.toLowerCase().includes('cancelar')
-        );
-
-        let iptUser = camposPreenchidos.find(i => !i.value.trim().includes(' ') && !i.value.includes('/'));
-        let iptSenha = camposPreenchidos.find(i => i !== iptUser && !i.value.trim().includes(' ') && !i.value.includes('/'));
-
-        usuario = iptUser ? iptUser.value.trim() : (extrair(/Usuário\s*\*?\s*\n*\s*([^\n]+)/i) || '');
-        senha = iptSenha ? iptSenha.value.trim() : (extrair(/Senha\s*\n*\s*([^\n]+)/i) || '123456');
-
-        let dateInput = allInputs.find(i => i.value && (i.value.match(/\d{2}\/\d{2}\/\d{4}/) || i.value.match(/\d{4}-\d{2}-\d{2}/)));
-        expiracaoRaw = dateInput ? dateInput.value : '';
-        if (!expiracaoRaw) {
-          let expMatch = txt.match(/(\d{2}\/\d{2}\/\d{4})/g);
-          expiracaoRaw = expMatch ? expMatch[expMatch.length - 1] : '';
+    // ==========================================
+    // 🎨 ESTILOS PREMIUM ROXO (M e Botões da Tabela)
+    // ==========================================
+    const stylePremium = document.createElement('style');
+    stylePremium.innerHTML = `
+        #omini-sync-card-premium {
+            background: #0f172a !important; border: 1px solid #8b5cf6 !important;
+            border-radius: 8px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.9), 0 0 10px rgba(139, 92, 246, 0.3) !important;
+            font-family: 'Segoe UI', sans-serif !important;
         }
-
-        let textareas = Array.from(document.querySelectorAll('textarea'));
-        comentario = textareas.length > 0 ? textareas[textareas.length - 1].value : '';
-        if (!comentario || comentario.toLowerCase().includes('cancelar')) comentario = 'Opera Player';
-
-        if (expiracaoRaw) {
-          let p = expiracaoRaw.includes('/') ? expiracaoRaw.split(' ')[0].split('/') : expiracaoRaw.split(' ')[0].split('-');
-          if(p.length === 3) {
-            let ano, mes, dia;
-            if(p[0].length === 4) { ano=p[0]; mes=p[1]; dia=p[2]; } else { dia=p[0]; mes=p[1]; ano=p[2]; }
-            let d = new Date(ano, mes-1, parseInt(dia) + 1);
-            expFormatada = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-          }
+        #omini-sync-card-premium * { color: #f8fafc !important; border-color: #334155 !important; }
+        #omini-sync-card-premium input, #omini-sync-card-premium textarea, #omini-sync-card-premium select {
+            background: #020617 !important; color: #c4b5fd !important; border: 1px solid #6d28d9 !important;
+            border-radius: 4px !important; outline: none !important;
         }
+        #omini-sync-card-premium input:focus, #omini-sync-card-premium textarea:focus { border-color: #a78bfa !important; }
+        #omini-sync-card-premium button {
+            background: linear-gradient(135deg, #6d28d9, #8b5cf6) !important; color: #fff !important;
+            border: 1px solid #a78bfa !important; box-shadow: 0 0 10px rgba(139, 92, 246, 0.4) !important;
+            border-radius: 4px !important; font-weight: 900 !important; cursor: pointer !important; transition: 0.2s !important;
+        }
+        #omini-sync-card-premium button:hover { filter: brightness(1.2) !important; }
 
-        return { usuario, senha, expFormatada, comentario };
+        /* Botão Inline da Tabela (Roxo TVS) */
+        .btn-sync-inline {
+            background: linear-gradient(135deg, #6d28d9, #8b5cf6); color: white; border: none; border-radius: 4px;
+            padding: 5px 12px; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 8px; margin-top: 4px;
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.4); transition: 0.2s; vertical-align: middle; display: inline-block;
+        }
+        .btn-sync-inline:hover { filter: brightness(1.2); }
+    `;
+    document.head.appendChild(stylePremium);
+
+    // ==========================================
+    // 🟣 A BOLHA M NO TOPO DA TELA
+    // ==========================================
+    const wrapper = document.createElement('div');
+    wrapper.id = 'omini-bolha-tvs-wrapper';
+    wrapper.style.cssText = `position: fixed !important; top: 130px !important; right: 15px !important; z-index: 2147483647 !important; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;`;
+
+    const bolha = document.createElement('div');
+    bolha.id = 'omini-bolha-tvs-btn';
+    bolha.style.cssText = `width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #4c1d95, #7c3aed); display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; box-shadow: 0 0 15px rgba(139, 92, 246, 0.6), inset 0 0 8px rgba(139, 92, 246, 0.4); border: 2px solid #a78bfa; transition: transform 0.2s, background 0.2s; user-select: none;`;
+    bolha.innerHTML = `<span style="font-size: 22px; font-weight: 900; font-style: italic; color: #fff; filter: drop-shadow(0 0 5px #a78bfa);">M</span>`;
+
+    function bolhaEstadoAberto() {
+        bolha.innerHTML = `❌`; bolha.style.background = `linear-gradient(135deg, #450a0a, #991b1b)`; bolha.style.borderColor = `#ff0055`;
     }
 
-    // ==============================================================
-    // 2. A INTERFACE MASTERX (Puxa os dados da tabela OU da página)
-    // ==============================================================
-    function abrirJanelaSync(dadosInjetados) {
-        if(document.getElementById('masterx-sync-overlay')) return;
-
-        // Se vieram dados do botão Sniper, ele usa. Se não, raspa a página.
-        let dados = dadosInjetados || extrairDadosDaPagina();
-
-        const o = document.createElement('div');
-        o.id = 'masterx-sync-overlay';
-        o.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:999999;display:flex;justify-content:center;align-items:center;';
-
-        const m = document.createElement('div');
-        m.style.cssText = 'background:#222;padding:25px;border-radius:15px;width:340px;box-shadow:0 10px 30px rgba(0,0,0,0.5);font-family:sans-serif;color:#fff;text-align:center;border: 1px solid #ff0055;';
-
-        m.innerHTML = `
-          <h2 style="margin-top:0;color:#ff0055;">⚡ Sync -> Opera</h2>
-          <div style="color:#ffeb3b;font-size:12px;margin-bottom:15px;">Alvo: <b>OPERA</b></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;text-align:left;">
-            <div>
-              <label style="font-size:12px;color:#aaa;">Usuário:</label>
-              <input id="mx-user" type="text" value="${dados.usuario}" style="width:100%;padding:8px;margin-top:2px;border-radius:8px;border:none;background:#333;color:#fff;font-size:14px;">
-            </div>
-            <div>
-              <label style="font-size:12px;color:#aaa;">Senha:</label>
-              <input id="mx-senha" type="text" value="${dados.senha}" style="width:100%;padding:8px;margin-top:2px;border-radius:8px;border:none;background:#333;color:#fff;font-size:14px;">
-            </div>
-          </div>
-          <div style="text-align:left;margin-bottom:15px;">
-            <label style="font-size:12px;color:#aaa;">Expiração Correta (+1 p/ Anular Fuso):</label>
-            <input id="mx-exp" type="text" value="${dados.expFormatada}" style="width:100%;padding:10px;margin-top:5px;border-radius:8px;border:none;background:#333;color:#fff;font-size:16px;">
-          </div>
-          <div style="text-align:left;margin-bottom:20px;">
-            <label style="font-size:12px;color:#aaa;">Nome/Device:</label>
-            <input id="mx-nome" type="text" value="${dados.comentario.replace(/\n/g, ' ')}" style="width:100%;padding:10px;margin-top:5px;border-radius:8px;border:none;background:#333;color:#fff;font-size:16px;">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-            <button id="mx-btn-criar" style="padding:12px;border:none;border-radius:8px;background:#00ff88;color:#000;font-weight:bold;cursor:pointer;">➕ CRIAR</button>
-            <button id="mx-btn-renovar" style="padding:12px;border:none;border-radius:8px;background:#2962ff;color:#fff;font-weight:bold;cursor:pointer;">🔄 RENOVAR</button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
-            <button id="mx-btn-editar" style="padding:12px;border:none;border-radius:8px;background:#ff8c00;color:#fff;font-weight:bold;cursor:pointer;">✏️ EDITAR</button>
-            <button id="mx-btn-deletar" style="padding:12px;border:none;border-radius:8px;background:#d32f2f;color:#fff;font-weight:bold;cursor:pointer;">🗑️ APAGAR</button>
-          </div>
-          <button id="mx-btn-fechar" style="width:100%;padding:12px;border:1px solid #555;border-radius:8px;background:transparent;color:#aaa;cursor:pointer;">❌ Fechar</button>
-          <div id="mx-status" style="margin-top:15px;font-size:14px;font-weight:bold;"></div>
-        `;
-
-        o.appendChild(m); document.body.appendChild(o);
-
-        document.getElementById('mx-btn-fechar').onclick = () => {
-            o.remove();
-            bolhaEstadoFechado();
-        };
-
-        // FUNÇÃO QUE MANDA O COMANDO PRO CLOUDFLARE
-        function acaoMasterX(t) {
-            const s = document.getElementById('mx-status');
-            s.innerHTML = '⏳ Processando...'; s.style.color = '#ffeb3b';
-            const p = {
-                acao: t,
-                usuario_cliente: document.getElementById('mx-user').value,
-                novo_nome: document.getElementById('mx-nome').value,
-                senha_cliente: document.getElementById('mx-senha').value,
-                data_expiracao: document.getElementById('mx-exp').value
-            };
-            fetch(LINK_WORKER_OPERA, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(p)
-            })
-            .then(r => r.json())
-            .then(d => { s.innerHTML = d.msg; s.style.color = d.status === 'sucesso' ? '#00ff88' : '#ff4444'; })
-            .catch(e => { s.innerHTML = '❌ Erro de Comunicação com o Cloudflare.'; s.style.color = '#ff4444'; });
-        }
-
-        document.getElementById('mx-btn-criar').onclick = () => acaoMasterX('criar');
-        document.getElementById('mx-btn-renovar').onclick = () => acaoMasterX('renovar');
-        document.getElementById('mx-btn-editar').onclick = () => acaoMasterX('editar');
-        document.getElementById('mx-btn-deletar').onclick = () => acaoMasterX('deletar');
+    function bolhaEstadoFechado() {
+        bolha.innerHTML = `<span style="font-size: 22px; font-weight: 900; font-style: italic; color: #fff; filter: drop-shadow(0 0 5px #a78bfa);">M</span>`;
+        bolha.style.background = `linear-gradient(135deg, #4c1d95, #7c3aed)`; bolha.style.borderColor = `#a78bfa`;
     }
 
-    // ==============================================================
-    // 3. O MÓDULO SNIPER (Para a tabela do Opera Player)
-    // ==============================================================
-    function injetarBotoesSniperOpera() {
-        let linhas = document.querySelectorAll('table tbody tr');
+    function acionarScriptMaster() {
+        let linkDoWorkerTVS = 'https://tvsmastersync.lucassheiksk41.workers.dev';
+        let s = document.createElement('script');
+        s.src = linkDoWorkerTVS + '?t=' + Date.now();
+        document.body.appendChild(s);
+        bolhaEstadoAberto();
+    }
+
+    bolha.onclick = () => {
+        bolha.style.transform = 'scale(0.8)';
+        setTimeout(() => bolha.style.transform = 'none', 150);
+
+        let btnFechar = Array.from(document.querySelectorAll('*')).find(e => e.innerText && e.innerText.trim() === '❌ Fechar');
+        if (btnFechar && btnFechar.offsetHeight > 0) {
+            btnFechar.click(); bolhaEstadoFechado();
+        } else {
+            acionarScriptMaster();
+        }
+    };
+
+    wrapper.appendChild(bolha);
+    document.body.appendChild(wrapper);
+
+    // ==========================================
+    // ⚡ INJETOR DE BOTÕES NAS LINHAS DA TABELA (TVS)
+    // ==========================================
+    function injetarBotoesNaTabela() {
+        const linhas = document.querySelectorAll('table tbody tr');
 
         linhas.forEach(linha => {
-            let colunas = linha.querySelectorAll('td');
+            const cols = linha.querySelectorAll('td');
+            if(cols.length < 5) return;
 
-            if (colunas.length >= 5 && !linha.querySelector('.btn-sniper-sync')) {
+            const colunaAcoes = cols[cols.length - 1]; // Geralmente a última coluna tem as ações (+30 / Menu)
 
-                let colunaAcoes = colunas[4] || colunas[colunas.length - 1];
-                let divBotoes = colunaAcoes.querySelector('.btn-group') || colunaAcoes;
+            // Só injeta se ainda não tiver o botão
+            if (colunaAcoes && !linha.querySelector('.btn-sync-inline')) {
 
-                let btn = document.createElement('button');
-                btn.className = 'btn-sniper-sync';
-                btn.innerHTML = '⚡ Sync';
-                btn.style.cssText = 'background: linear-gradient(135deg, #020617, #1e3a8a); color:#00f6ff; border:1px solid #00f6ff; padding:4px 8px; border-radius:4px; margin-left:5px; cursor:pointer; font-weight:bold; font-size:11px; box-shadow: 0 0 5px rgba(0, 246, 255, 0.4);';
-
-                btn.onclick = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    // USUÁRIO (Coluna 0)
-                    let usuario = '';
-                    let userLink = colunas[0].querySelector("a");
-                    if (userLink) {
-                        usuario = userLink.innerText.trim();
-                    } else {
-                        usuario = colunas[0].innerText.split('\n')[0].trim();
+                // 🕵️ RADAR INTELIGENTE (Procura a coluna Status para não se perder)
+                let statusIdx = -1;
+                for (let j = 0; j < Math.min(6, cols.length); j++) {
+                    let txt = cols[j].innerText.trim().toLowerCase();
+                    if (txt === 'ativo' || txt === 'inativo' || txt === 'bloqueado' || txt.includes('vencido') || txt.includes('expirado') || txt === 'teste') {
+                        statusIdx = j;
+                        break;
                     }
+                }
 
-                    // VENCIMENTO (Coluna 1)
-                    let expTexto = colunas[1].innerText.trim();
-                    let expFormatada = '';
-                    let matchData = expTexto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-                    if (matchData) {
-                        let d = new Date(matchData[3], parseInt(matchData[2]) - 1, parseInt(matchData[1]) + 1);
-                        expFormatada = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+                // Se achou o status e tem colunas suficientes para trás e para frente
+                if (statusIdx >= 2) {
+                    let usuario = cols[statusIdx - 2].innerText.trim().split('\n')[0].trim();
+                    let notas = cols[statusIdx + 2] ? cols[statusIdx + 2].innerText.trim() : '';
+
+                    if (usuario !== '') {
+                        const btnSync = document.createElement('button');
+                        btnSync.className = 'btn-sync-inline';
+                        btnSync.innerHTML = '🔄 Sync Master';
+
+                        btnSync.onclick = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            btnSync.innerHTML = '⚡ Abrindo...';
+                            btnSync.style.background = '#f59e0b';
+
+                            // Extrai o MAC do meio das notas
+                            let macEncontrado = "";
+                            const regexMac = /([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})/i;
+                            const match = notas.match(regexMac);
+                            if (match) macEncontrado = match[0];
+                            if (!macEncontrado) macEncontrado = notas;
+
+                            // 1. Atualiza a memória global (Caso o Worker do TVS use isso)
+                            window.lastTvsData = { u: usuario, p: '', e: '', n: notas };
+
+                            // 2. Camuflagem DOM (Caso o Worker leia da tela)
+                            let spoofDiv = document.getElementById('omini-spoof-dom');
+                            if (!spoofDiv) {
+                                spoofDiv = document.createElement('div');
+                                spoofDiv.id = 'omini-spoof-dom';
+                                spoofDiv.style.display = 'none';
+                                document.body.appendChild(spoofDiv);
+                            }
+                            spoofDiv.innerHTML = `
+                                <input id="username" name="username" value="${usuario}">
+                                <input id="usuario" name="usuario" value="${usuario}">
+                                <textarea id="notes" name="notes">${macEncontrado}</textarea>
+                                <textarea id="comentarios" name="comentarios">${macEncontrado}</textarea>
+                                <input id="mac" name="mac" value="${macEncontrado}">
+                            `;
+
+                            // 3. Dispara a janela do MasterX instantaneamente
+                            acionarScriptMaster();
+
+                            // 4. Preenchimento Forçado do Card
+                            let tentativas = 0;
+                            let watcher = setInterval(() => {
+                                tentativas++;
+                                let modal = document.getElementById('omini-sync-card-premium') || document.querySelector('div[style*="z-index: 2147483646"]');
+                                if (modal) {
+                                    let inputs = modal.querySelectorAll('input');
+                                    let textareas = modal.querySelectorAll('textarea');
+
+                                    if (inputs.length > 0 && inputs[0].value === '') inputs[0].value = usuario;
+
+                                    if (textareas.length > 0 && textareas[0].value === '') {
+                                        textareas[0].value = macEncontrado;
+                                    } else if (inputs.length > 2 && inputs[inputs.length-1].value === '') {
+                                        inputs[inputs.length-1].value = macEncontrado;
+                                    }
+                                    clearInterval(watcher);
+                                }
+                                if (tentativas > 20) clearInterval(watcher);
+                            }, 200);
+
+                            // Devolve o visual do botão
+                            setTimeout(() => {
+                                btnSync.innerHTML = '🔄 Sync Master';
+                                btnSync.style.background = 'linear-gradient(135deg, #6d28d9, #8b5cf6)';
+                            }, 1500);
+                        };
+
+                        colunaAcoes.appendChild(btnSync);
                     }
-
-                    // NOME / NOTAS (Coluna 4)
-                    let cloneCol4 = colunas[4].cloneNode(true);
-                    let botoesLixo = cloneCol4.querySelectorAll('button, a, .btn-group, i');
-                    botoesLixo.forEach(b => b.remove());
-                    let notasApenas = cloneCol4.innerText.replace(/Adicionado.*?confiança/gi, '').replace(/\n/g, ' ').trim();
-                    notasApenas = notasApenas.replace(/\s{2,}/g, ' ');
-
-                    let comentario = notasApenas || `Opera ${usuario}`;
-
-                    // A SENHA É IGUAL AO USUÁRIO
-                    let senha = usuario;
-
-                    // Dispara a janela preta passando os dados lidos
-                    abrirJanelaSync({usuario, senha, expFormatada, comentario});
-                    bolhaEstadoAberto();
-                };
-
-                divBotoes.appendChild(btn);
+                }
             }
         });
     }
 
-    // ==============================================================
-    // 4. A BOLHA M NEON (Design Nativo Opera)
-    // ==============================================================
-    function bolhaEstadoAberto() {
-        let bolha = document.getElementById('omini-bolha-opera-btn');
-        if(!bolha) return;
-        bolha.innerHTML = `<span style="font-family: 'Arial Black', sans-serif; font-size: 20px; color: #ff0055; text-shadow: 0 0 10px #ff0055;">❌</span>`;
-        bolha.style.background = `linear-gradient(135deg, #450a0a, #991b1b)`;
-        bolha.style.borderColor = `#ff0055`;
-        bolha.style.boxShadow = `0 0 15px rgba(255, 0, 85, 0.6), inset 0 0 8px rgba(255, 0, 85, 0.3)`;
-    }
-
-    function bolhaEstadoFechado() {
-        let bolha = document.getElementById('omini-bolha-opera-btn');
-        if(!bolha) return;
-        bolha.innerHTML = `<span style="font-family: 'Arial Black', sans-serif; font-size: 24px; font-style: italic; color: #00f6ff; text-shadow: 0 0 10px #00f6ff;">M</span>`;
-        bolha.style.background = `linear-gradient(135deg, #020617, #1e3a8a)`;
-        bolha.style.borderColor = `#00f6ff`;
-        bolha.style.boxShadow = `0 0 15px rgba(0, 246, 255, 0.6), inset 0 0 8px rgba(0, 246, 255, 0.3)`;
-    }
-
-    function injetarBolha() {
-        if (document.getElementById('omini-bolha-opera-wrapper') || !document.body) return;
-
-        const wrapper = document.createElement('div');
-        wrapper.id = 'omini-bolha-opera-wrapper';
-        wrapper.style.cssText = `
-            position: fixed !important; top: 135px !important; right: 15px !important;
-            z-index: 2147483647 !important; display: flex; flex-direction: column;
-            align-items: flex-end; gap: 10px;
-        `;
-
-        const bolha = document.createElement('div');
-        bolha.id = 'omini-bolha-opera-btn';
-        bolha.style.cssText = `
-            width: 48px; height: 48px; border-radius: 50%;
-            background: linear-gradient(135deg, #020617, #1e3a8a);
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer; box-shadow: 0 0 15px rgba(0, 246, 255, 0.6), inset 0 0 8px rgba(0, 246, 255, 0.3);
-            border: 2px solid #00f6ff; transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-            user-select: none; -webkit-tap-highlight-color: transparent;
-        `;
-        bolha.innerHTML = `<span style="font-family: 'Arial Black', sans-serif; font-size: 24px; font-style: italic; color: #00f6ff; text-shadow: 0 0 10px #00f6ff;">M</span>`;
-
-        bolha.onclick = () => {
-            bolha.style.transform = 'scale(0.8)';
-            setTimeout(() => bolha.style.transform = 'none', 150);
-
-            let janelaAberta = document.getElementById('masterx-sync-overlay');
-            if (janelaAberta) {
-                janelaAberta.remove();
-                bolhaEstadoFechado();
-            } else {
-                abrirJanelaSync();
-                bolhaEstadoAberto();
-            }
-        };
-
-        wrapper.appendChild(bolha);
-        document.body.appendChild(wrapper);
-    }
-
-    // ==============================================================
-    // 5. O CÃO DE GUARDA
-    // ==============================================================
-    setTimeout(injetarBolha, 500);
-
+    // ==========================================
+    // 🛡️ O CÃO DE GUARDA (Mantém a Janela formatada)
+    // ==========================================
     setInterval(() => {
-        if (!document.body) return;
-        injetarBolha();
-        injetarBotoesSniperOpera(); // Adiciona o botão "Sync" na tabela
+        injetarBotoesNaTabela();
 
-        let bolha = document.getElementById('omini-bolha-opera-btn');
-        let janelaAberta = document.getElementById('masterx-sync-overlay');
+        let btnFechar = Array.from(document.querySelectorAll('*')).find(e => e.innerText && e.innerText.trim() === '❌ Fechar');
 
-        if (bolha && bolha.innerHTML.includes('❌') && !janelaAberta) {
-            bolhaEstadoFechado();
+        if (btnFechar) {
+            let card = btnFechar.parentElement;
+            while(card && card.tagName === 'DIV') {
+                let bg = window.getComputedStyle(card).backgroundColor;
+                if (bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') break;
+                card = card.parentElement;
+            }
+
+            if (card && !card.dataset.ominiFormatado) {
+                card.dataset.ominiFormatado = "sim";
+                card.id = "omini-sync-card-premium";
+
+                let backdrop = card.parentElement;
+                if (backdrop && window.getComputedStyle(backdrop).position === 'fixed') {
+                    backdrop.style.background = 'transparent';
+                    backdrop.style.pointerEvents = 'none';
+                    card.style.pointerEvents = 'auto';
+                }
+
+                card.style.position = 'fixed';
+                card.style.top = '130px';
+                card.style.left = 'auto';
+                card.style.bottom = 'auto';
+                card.style.right = '75px';
+                card.style.transform = 'scale(0.85)';
+                card.style.transformOrigin = 'top right';
+                card.style.margin = '0';
+                card.style.zIndex = '2147483646';
+
+                document.body.style.overflow = 'auto';
+
+                btnFechar.addEventListener('click', () => {
+                    bolhaEstadoFechado();
+                });
+            }
         }
-    }, 800);
+    }, 500);
 })();
