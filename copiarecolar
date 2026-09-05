@@ -1,225 +1,212 @@
 // ==UserScript==
-// @name         SYNC MASTER - CLASSIC (Interface Visual)
+// @name         SYNC MASTER - CLOUD
 // @namespace    http://tampermonkey.net/
-// @version      6.1
-// @description  Botão que abre a janela de controlo total para o MasterX (Nome Completo)
-// @author       Comandante & Omini
-// @match        *://*.painelclass.com/*
+// @version      1.2
+// @description  Botão Sniper Integrado + Bolha M Neon (Alvo grothx)
+// @author       Você & Omini
+// @match        *://*.grothx.net/*
+// @match        *://a.grothx.net/*
 // @grant        GM_xmlhttpRequest
-// @connect      *
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    console.log("🟪 SYNC MASTER CLASSIC: Interface Visual Armada (v6.1 - Radar Corrigido)...");
+    // ⚠️ COLOQUE O LINK DO SEU NOVO WORKER DA CLOUD DENTRO DAS ASPAS ABAIXO:
+    const LINK_WORKER_CLOUD = 'https://synccloudmaster.lucassheiksk41.workers.dev';
 
-    const WORKER_URL = "https://syncclassicmaster.lucassheiksk41.workers.dev";
+    console.log("🔮 ROCKET SYNC: Script Cloud (v1.2) - Alvo grothx.net travado...");
 
-    // ==========================================
-    // 🎨 ESTILOS DA TELA
-    // ==========================================
-    const estilos = document.createElement('style');
-    estilos.innerHTML = `
-        .btn-sync-master {
-            background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: none;
-            padding: 5px 10px; border-radius: 6px; font-weight: 700; cursor: pointer;
-            font-size: 11px; margin-left: 8px; margin-top: 4px; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
-            transition: all 0.2s; display: inline-block;
-        }
-        .btn-sync-master:hover { transform: scale(1.05); filter: brightness(1.2); }
+    // ==============================================================
+    // 1. CONSTRUÇÃO DA INTERFACE & ENVIO BLINDADO
+    // ==============================================================
+    function abrirJanelaSync(dados) {
+        if(document.getElementById('masterx-sync-overlay')) return;
 
-        #om-backdrop {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-            z-index: 2147483646; display: none; justify-content: center; align-items: center;
-        }
+        const o = document.createElement('div');
+        o.id = 'masterx-sync-overlay';
+        o.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:2147483647;display:flex;justify-content:center;align-items:center;';
 
-        #om-modal {
-            background: #0f172a; border: 1px solid #8b5cf6; border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px rgba(139, 92, 246, 0.3);
-            width: 320px; padding: 20px; font-family: 'Segoe UI', sans-serif; color: #f8fafc;
-            display: flex; flex-direction: column; gap: 12px;
-        }
+        const m = document.createElement('div');
+        m.style.cssText = 'background:#222;padding:25px;border-radius:15px;width:340px;box-shadow:0 10px 30px rgba(0,0,0,0.5);font-family:sans-serif;color:#fff;text-align:center;border: 1px solid #00f6ff;';
 
-        #om-modal h3 { margin: 0; text-align: center; color: #fff; font-size: 18px; text-shadow: 0 0 8px #a78bfa; }
-        #om-modal p.alvo { margin: -8px 0 10px 0; text-align: center; font-size: 10px; color: #94a3b8; letter-spacing: 1px; font-weight: bold; }
-
-        .om-row { display: flex; gap: 10px; }
-        .om-col { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-        .om-col label { font-size: 11px; color: #cbd5e1; font-weight: 600; }
-
-        #om-modal input, #om-modal textarea {
-            background: #020617; color: #c4b5fd; border: 1px solid #6d28d9; border-radius: 6px;
-            padding: 8px; font-size: 12px; outline: none; transition: 0.2s; width: 100%; box-sizing: border-box;
-        }
-        #om-modal input:focus, #om-modal textarea:focus { border-color: #a78bfa; box-shadow: 0 0 8px rgba(167, 139, 250, 0.3); }
-        #om-modal textarea { resize: none; height: 50px; }
-
-        .om-grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; }
-        .om-btn-acao {
-            background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white; border: 1px solid #8b5cf6;
-            padding: 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(91, 33, 182, 0.5); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-        .om-btn-acao:hover { filter: brightness(1.2); transform: translateY(-2px); }
-
-        #om-fechar {
-            background: #1e293b; color: #ef4444; border: 1px solid #ef4444; margin-top: 5px;
-            padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;
-        }
-        #om-fechar:hover { background: #ef4444; color: #fff; }
-
-        #om-status { text-align: center; font-size: 12px; font-weight: bold; min-height: 16px; margin-top: 5px; }
-    `;
-    document.head.appendChild(estilos);
-
-    // ==========================================
-    // 🧱 CONSTRUÇÃO DA TELA (DOM)
-    // ==========================================
-    const backdrop = document.createElement('div');
-    backdrop.id = 'om-backdrop';
-    backdrop.innerHTML = `
-        <div id="om-modal">
-            <h3>⚡ Sync -> MasterX</h3>
-            <p class="alvo">ALVO: PAINEL CLASSIC</p>
-
-            <div class="om-row">
-                <div class="om-col"><label>Usuário:</label><input id="om-user"></div>
-                <div class="om-col"><label>Senha:</label><input id="om-pass"></div>
+        m.innerHTML = `
+          <h2 style="margin-top:0;color:#00f6ff;">⚡ Sync -> Cloud</h2>
+          <div style="color:#ffeb3b;font-size:12px;margin-bottom:15px;">Alvo: <b>CLOUD</b></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;text-align:left;">
+            <div>
+              <label style="font-size:12px;color:#aaa;">Usuário:</label>
+              <input id="mx-user" type="text" value="${dados.usuario}" style="width:100%;padding:8px;margin-top:2px;border-radius:8px;border:none;background:#333;color:#fff;font-size:14px;">
             </div>
-
-            <div class="om-col">
-                <label>Expiração Correta (+1 p/ Anular Fuso):</label>
-                <input id="om-exp">
+            <div>
+              <label style="font-size:12px;color:#aaa;">Senha:</label>
+              <input id="mx-senha" type="text" value="${dados.senha}" style="width:100%;padding:8px;margin-top:2px;border-radius:8px;border:none;background:#333;color:#fff;font-size:14px;">
             </div>
+          </div>
+          <div style="text-align:left;margin-bottom:15px;">
+            <label style="font-size:12px;color:#aaa;">Expiração Correta (+1 p/ Anular Fuso):</label>
+            <input id="mx-exp" type="text" value="${dados.expFormatada}" style="width:100%;padding:10px;margin-top:5px;border-radius:8px;border:none;background:#333;color:#fff;font-size:16px;">
+          </div>
+          <div style="text-align:left;margin-bottom:20px;">
+            <label style="font-size:12px;color:#aaa;">Nome/Device:</label>
+            <input id="mx-nome" type="text" value="${dados.comentario.replace(/\n/g, ' ')}" style="width:100%;padding:10px;margin-top:5px;border-radius:8px;border:none;background:#333;color:#fff;font-size:16px;">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <button id="mx-btn-criar" style="padding:12px;border:none;border-radius:8px;background:#00ff88;color:#000;font-weight:bold;cursor:pointer;">➕ CRIAR</button>
+            <button id="mx-btn-renovar" style="padding:12px;border:none;border-radius:8px;background:#2962ff;color:#fff;font-weight:bold;cursor:pointer;">🔄 RENOVAR</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
+            <button id="mx-btn-editar" style="padding:12px;border:none;border-radius:8px;background:#ff8c00;color:#fff;font-weight:bold;cursor:pointer;">✏️ EDITAR</button>
+            <button id="mx-btn-deletar" style="padding:12px;border:none;border-radius:8px;background:#d32f2f;color:#fff;font-weight:bold;cursor:pointer;">🗑️ APAGAR</button>
+          </div>
+          <button id="mx-btn-fechar" style="width:100%;padding:12px;border:1px solid #555;border-radius:8px;background:transparent;color:#aaa;cursor:pointer;">❌ Fechar</button>
+          <div id="mx-status" style="margin-top:15px;font-size:14px;font-weight:bold;"></div>
+        `;
 
-            <div class="om-col">
-                <label>Nome Completo / Notas:</label>
-                <textarea id="om-notas"></textarea>
-            </div>
+        o.appendChild(m); document.body.appendChild(o);
+        document.getElementById('mx-btn-fechar').onclick = () => o.remove();
 
-            <div id="om-status"></div>
+        function acaoMasterX(t) {
+            const s = document.getElementById('mx-status');
+            s.innerHTML = '⏳ Processando...'; s.style.color = '#ffeb3b';
 
-            <div class="om-grid-botoes">
-                <button class="om-btn-acao" id="btn-criar">✨ CRIAR</button>
-                <button class="om-btn-acao" id="btn-renovar">💵 RENOVAR</button>
-                <button class="om-btn-acao" id="btn-editar">🖍️ EDITAR</button>
-                <button class="om-btn-acao" id="btn-apagar">🗑️ APAGAR</button>
-            </div>
+            if (LINK_WORKER_CLOUD.includes("COLOQUE_SEU_LINK_AQUI")) {
+                s.innerHTML = '❌ ERRO: Coloque o Link do Worker na Linha 18!';
+                s.style.color = '#ff4444';
+                return;
+            }
 
-            <button id="om-fechar">❌ Fechar</button>
-        </div>
-    `;
-    document.body.appendChild(backdrop);
+            const p = {
+                acao: t,
+                usuario_cliente: document.getElementById('mx-user').value,
+                novo_nome: document.getElementById('mx-nome').value,
+                senha_cliente: document.getElementById('mx-senha').value,
+                data_expiracao: document.getElementById('mx-exp').value
+            };
 
-    // ==========================================
-    // ⚙️ LÓGICA DE INJEÇÃO NA TABELA
-    // ==========================================
-    function injetarBotoesSync() {
-        try {
-            let linhas = document.querySelectorAll('table tbody tr');
+            GM_xmlhttpRequest({
+                method: "POST",
+                url: LINK_WORKER_CLOUD,
+                headers: { "Content-Type": "application/json" },
+                data: JSON.stringify(p),
+                onload: function(response) {
+                    try {
+                        let d = JSON.parse(response.responseText);
+                        s.innerHTML = d.msg;
+                        s.style.color = d.status === 'sucesso' ? '#00ff88' : '#ff4444';
+                    } catch(e) {
+                        s.innerHTML = '❌ O Worker do Cloudflare retornou um erro interno.';
+                        s.style.color = '#ff4444';
+                    }
+                },
+                onerror: function(error) {
+                    s.innerHTML = '❌ Conexão Bloqueada. Verifique o Link do Worker.';
+                    s.style.color = '#ff4444';
+                }
+            });
+        }
 
-            linhas.forEach(linha => {
-                if (linha.querySelector('.btn-sync-master')) return;
+        document.getElementById('mx-btn-criar').onclick = () => acaoMasterX('criar');
+        document.getElementById('mx-btn-renovar').onclick = () => acaoMasterX('renovar');
+        document.getElementById('mx-btn-editar').onclick = () => acaoMasterX('editar');
+        document.getElementById('mx-btn-deletar').onclick = () => acaoMasterX('deletar');
+    }
 
-                let colunas = linha.querySelectorAll('td');
-                // Trava de segurança reduzida: se tiver pelo menos 6 colunas, já sabemos que é cliente
-                if (colunas.length < 6) return;
+    // ==============================================================
+    // 2. INJEÇÃO DOS BOTÕES "SNIPER" NA TABELA
+    // ==============================================================
+    function injetarBotoesSniper() {
+        // Encontra todas as linhas de clientes (tr) dentro da tabela
+        let linhas = document.querySelectorAll('tr');
 
-                // Vai SEMPRE para a última coluna da tabela (Ações), não importa quantas a tabela tenha
-                let tdAcoes = colunas[colunas.length - 1];
+        linhas.forEach(linha => {
+            let celulas = linha.querySelectorAll('td');
+            if(celulas.length >= 9 && !linha.querySelector('.btn-sniper-sync')) {
 
-                let btnSync = document.createElement('button');
-                btnSync.innerText = '🔄 Sync Master';
-                btnSync.className = 'btn-sync-master';
+                let colunaAcoes = celulas[celulas.length - 1];
 
-                btnSync.onclick = function(e) {
-                    e.preventDefault(); e.stopPropagation();
-                    abrirPainelVisual(colunas);
+                let btn = document.createElement('button');
+                btn.className = 'btn-sniper-sync';
+                btn.innerHTML = '⚡ Sync';
+                btn.style.cssText = 'background: linear-gradient(135deg, #020617, #1e3a8a); color:#00f6ff; border:1px solid #00f6ff; padding:4px 8px; border-radius:4px; margin-left:5px; cursor:pointer; font-weight:bold; font-size:11px; box-shadow: 0 0 5px rgba(0, 246, 255, 0.4);';
+
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    let usuario = celulas[1].textContent.trim();
+                    let senha = celulas[2].textContent.trim();
+                    let vencimentoRaw = celulas[4].textContent.trim();
+                    let comentario = celulas[7].textContent.trim() || 'Cloud Player';
+
+                    let expFormatada = '';
+                    if (vencimentoRaw) {
+                        let match = vencimentoRaw.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                        if (match) {
+                            let dia = match[1];
+                            let mes = match[2];
+                            let ano = match[3];
+                            let d = new Date(ano, parseInt(mes)-1, parseInt(dia) + 1);
+                            expFormatada = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+                        }
+                    }
+
+                    abrirJanelaSync({usuario, senha, expFormatada, comentario});
                 };
 
-                tdAcoes.appendChild(btnSync);
-            });
-        } catch(e) {
-            console.log("Cão de guarda silencioso...");
-        }
-    }
-
-    // ==========================================
-    // 🖥️ LÓGICA DE ABERTURA E ENVIO
-    // ==========================================
-    function abrirPainelVisual(colunas) {
-        // Extração blindada: Mesmo que falte uma coluna visualmente, o script não encrava
-        let nomeCompleto = colunas[1] ? (colunas[1].innerText || "").replace(/\s+/g, ' ').trim() : "";
-        let usuario = colunas[3] ? (colunas[3].innerText || "").trim() : "";
-        let senha = colunas[4] ? (colunas[4].innerText || "").trim() : "";
-        let expiracao = colunas[7] ? (colunas[7].innerText || "").replace(/\n/g, ' ').trim() : "";
-
-        // Preenche a tela
-        document.getElementById('om-user').value = usuario;
-        document.getElementById('om-pass').value = senha;
-        document.getElementById('om-exp').value = expiracao;
-        document.getElementById('om-notas').value = nomeCompleto;
-        document.getElementById('om-status').innerText = "";
-
-        // Mostra a tela
-        backdrop.style.display = 'flex';
-    }
-
-    // Função de Disparo
-    function acionarWorker(acaoStr) {
-        const statusDiv = document.getElementById('om-status');
-        const botoes = document.querySelectorAll('.om-btn-acao');
-
-        statusDiv.style.color = '#f59e0b';
-        statusDiv.innerText = `⏳ A Executar: ${acaoStr.toUpperCase()}...`;
-        botoes.forEach(b => b.disabled = true);
-
-        let payload = {
-            acao: acaoStr,
-            usuario_cliente: document.getElementById('om-user').value,
-            senha_cliente: document.getElementById('om-pass').value,
-            data_expiracao: document.getElementById('om-exp').value,
-            novo_nome: document.getElementById('om-notas').value
-        };
-
-        GM_xmlhttpRequest({
-            method: "POST",
-            url: WORKER_URL,
-            headers: { "Content-Type": "application/json" },
-            data: JSON.stringify(payload),
-            onload: function(response) {
-                try {
-                    let res = JSON.parse(response.responseText);
-                    if (res.status === "sucesso") {
-                        statusDiv.style.color = '#10b981'; // Verde
-                        statusDiv.innerText = res.msg;
-                    } else {
-                        statusDiv.style.color = '#ef4444'; // Vermelho
-                        statusDiv.innerText = res.msg;
-                    }
-                } catch(e) {
-                    statusDiv.style.color = '#ef4444';
-                    statusDiv.innerText = "❌ Erro ao ler resposta do Worker.";
-                }
-                botoes.forEach(b => b.disabled = false);
-            },
-            onerror: function() {
-                statusDiv.style.color = '#ef4444';
-                statusDiv.innerText = "❌ Falha de Ligação com a Cloudflare.";
-                botoes.forEach(b => b.disabled = false);
+                let divAcoes = colunaAcoes.querySelector('div') || colunaAcoes;
+                divAcoes.appendChild(btn);
             }
         });
     }
 
-    // Mapeamento dos Botões da Tela
-    document.getElementById('btn-criar').onclick = () => acionarWorker('criar');
-    document.getElementById('btn-renovar').onclick = () => acionarWorker('renovar');
-    document.getElementById('btn-editar').onclick = () => acionarWorker('editar');
-    document.getElementById('btn-apagar').onclick = () => acionarWorker('deletar');
-    document.getElementById('om-fechar').onclick = () => backdrop.style.display = 'none';
+    // ==============================================================
+    // 3. A BOLHA M NEON (Mantida como suporte global)
+    // ==============================================================
+    function injetarBolha() {
+        if (document.getElementById('omini-bolha-cloud-wrapper')) return;
 
-    // Cão de Guarda rápido
-    setInterval(injetarBotoesSync, 1000);
+        const wrapper = document.createElement('div');
+        wrapper.id = 'omini-bolha-cloud-wrapper';
+        wrapper.style.cssText = `
+            position: fixed !important; top: 135px !important; right: 15px !important;
+            z-index: 2147483647 !important; display: flex; flex-direction: column;
+            align-items: flex-end; gap: 10px; pointer-events: auto !important;
+        `;
+
+        const bolha = document.createElement('div');
+        bolha.id = 'omini-bolha-cloud-btn';
+        bolha.style.cssText = `
+            width: 48px; height: 48px; border-radius: 50%;
+            background: linear-gradient(135deg, #020617, #1e3a8a);
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; box-shadow: 0 0 15px rgba(0, 246, 255, 0.6), inset 0 0 8px rgba(0, 246, 255, 0.3);
+            border: 2px solid #00f6ff; transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        `;
+        bolha.innerHTML = `<span style="font-family: 'Arial Black', sans-serif; font-size: 24px; font-style: italic; color: #00f6ff; text-shadow: 0 0 10px #00f6ff;">M</span>`;
+
+        bolha.onclick = () => {
+            bolha.style.transform = 'scale(0.8)';
+            setTimeout(() => bolha.style.transform = 'none', 150);
+
+            let janelaAberta = document.getElementById('masterx-sync-overlay');
+            if (janelaAberta) {
+                janelaAberta.remove();
+            } else {
+                abrirJanelaSync({usuario: '', senha: '', expFormatada: '', comentario: 'Cloud Player'});
+            }
+        };
+
+        wrapper.appendChild(bolha);
+        document.documentElement.appendChild(wrapper);
+    }
+
+    setInterval(() => {
+        injetarBolha();
+        if (window.location.href.includes('client')) {
+            injetarBotoesSniper();
+        }
+    }, 1500);
+
 })();
