@@ -1,91 +1,238 @@
-
-
-Tampermonkey® by Jan Biniok
-v5.5.0
-	
-SYNC MASTER - DNA (Renovação Expressa)
-by Comandante & Omini
-
-1
 // ==UserScript==
-2
 // @name         SYNC MASTER - DNA (Renovação Expressa)
-3
 // @namespace    http://tampermonkey.net/
-4
 // @version      8.1
-5
 // @description  Bolha M Azul + Sync Direto na Tabela (Correção do Botão Invisível)
-6
 // @author       Comandante & Omini
-7
 // @match        *://cms.omini.fit/*
-8
 // @match        *://*.omini.fit/*
-9
 // @match        *://*.dna-go.com/*
-10
 // @match        *://*.dnago.com/*
-11
 // @match        *://painel.dnago/*
-12
 // @match        *://*/*dnago*
-13
 // @grant        none
-14
 // ==/UserScript==
-15
-​
-16
-(function() {
-17
-    'use strict';
-18
-​
-19
-    if (document.getElementById('omini-bolha-master-wrapper')) return;
-20
-​
-21
-    console.log("🟦 SYNC MASTER: Iniciando Versão 8.1 (Renovação Expressa na Tabela)...");
-22
-​
-23
-    // ==========================================
-24
-    // 🎨 ESTILOS PREMIUM AZUL (M e Botões da Tabela)
-25
-    // ==========================================
-26
-    const stylePremium = document.createElement('style');
-27
-    stylePremium.innerHTML = `
-28
-        #omini-sync-card-premium {
-29
-            background: #0f172a !important;
-30
-            border: 1px solid #0ea5e9 !important;
-31
-            border-radius: 8px !important;
-32
-            box-shadow: 0 10px 25px rgba(0,0,0,0.9), 0 0 10px rgba(14, 165, 233, 0.3) !important;
-33
-            font-family: 'Segoe UI', sans-serif !important;
-34
-        }
-35
-        #omini-sync-card-premium * { color: #f8fafc !important; border-color: #334155 !important; }
-36
-        #omini-sync-card-premium input, #omini-sync-card-premium textarea, #omini-sync-card-premium select {
-37
-            background: #020617 !important; color: #38bdf8 !important;
-38
-            border: 1px solid #0369a1 !important; border-radius: 4px !important; outline: none !important;
-39
-        }
-Tam - Seu bot de serviço
 
-Você gostaria de saber como substituir ou estender inclusões e/ou exclusões do script?
-Desativar
-Tampermonkey Bot
+(function() {
+    'use strict';
+
+    if (document.getElementById('omini-bolha-master-wrapper')) return;
+
+    console.log("🟦 SYNC MASTER: Iniciando Versão 8.1 (Renovação Expressa na Tabela)...");
+
+    // ==========================================
+    // 🎨 ESTILOS PREMIUM AZUL (M e Botões da Tabela)
+    // ==========================================
+    const stylePremium = document.createElement('style');
+    stylePremium.innerHTML = `
+        #omini-sync-card-premium {
+            background: #0f172a !important;
+            border: 1px solid #0ea5e9 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.9), 0 0 10px rgba(14, 165, 233, 0.3) !important;
+            font-family: 'Segoe UI', sans-serif !important;
+        }
+        #omini-sync-card-premium * { color: #f8fafc !important; border-color: #334155 !important; }
+        #omini-sync-card-premium input, #omini-sync-card-premium textarea, #omini-sync-card-premium select {
+            background: #020617 !important; color: #38bdf8 !important;
+            border: 1px solid #0369a1 !important; border-radius: 4px !important; outline: none !important;
+        }
+        #omini-sync-card-premium input:focus, #omini-sync-card-premium textarea:focus { border-color: #38bdf8 !important; }
+        #omini-sync-card-premium button {
+            background: linear-gradient(135deg, #0284c7, #0ea5e9) !important; color: #fff !important;
+            border: 1px solid #38bdf8 !important; box-shadow: 0 0 10px rgba(14, 165, 233, 0.4) !important;
+            border-radius: 4px !important; font-weight: 900 !important; cursor: pointer !important; transition: 0.2s !important;
+        }
+        #omini-sync-card-premium button:hover { filter: brightness(1.2) !important; }
+
+        .btn-sync-inline {
+            background: linear-gradient(135deg, #0284c7, #0ea5e9); color: white; border: none; border-radius: 4px;
+            padding: 5px 12px; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 8px; margin-top: 4px;
+            box-shadow: 0 0 8px rgba(14, 165, 233, 0.4); transition: 0.2s; vertical-align: middle; display: inline-block;
+        }
+        .btn-sync-inline:hover { filter: brightness(1.2); }
+    `;
+    document.head.appendChild(stylePremium);
+
+    // ==========================================
+    // 🔵 A BOLHA M NO TOPO DA TELA
+    // ==========================================
+    const wrapper = document.createElement('div');
+    wrapper.id = 'omini-bolha-master-wrapper';
+    wrapper.style.cssText = `position: fixed !important; top: 130px !important; right: 15px !important; z-index: 2147483647 !important; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;`;
+
+    const bolha = document.createElement('div');
+    bolha.id = 'omini-bolha-master-btn';
+    bolha.style.cssText = `width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #0369a1, #0ea5e9); display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; box-shadow: 0 0 15px rgba(14, 165, 233, 0.6), inset 0 0 8px rgba(14, 165, 233, 0.4); border: 2px solid #22d3ee; transition: transform 0.2s, background 0.2s; user-select: none;`;
+    bolha.innerHTML = `<span style="font-size: 22px; font-weight: 900; font-style: italic; color: #fff; filter: drop-shadow(0 0 5px #22d3ee);">M</span>`;
+
+    function bolhaEstadoAberto() {
+        bolha.innerHTML = `❌`; bolha.style.background = `linear-gradient(135deg, #450a0a, #991b1b)`; bolha.style.borderColor = `#ff0055`;
+    }
+
+    function bolhaEstadoFechado() {
+        bolha.innerHTML = `<span style="font-size: 22px; font-weight: 900; font-style: italic; color: #fff; filter: drop-shadow(0 0 5px #22d3ee);">M</span>`;
+        bolha.style.background = `linear-gradient(135deg, #0369a1, #0ea5e9)`; bolha.style.borderColor = `#22d3ee`;
+    }
+
+    function acionarScriptMaster() {
+        let s = document.createElement('script');
+        s.src = 'https://syncmaster.lucassheiksk41.workers.dev?t=' + Date.now();
+        document.body.appendChild(s);
+        bolhaEstadoAberto();
+    }
+
+    bolha.onclick = () => {
+        bolha.style.transform = 'scale(0.8)';
+        setTimeout(() => bolha.style.transform = 'none', 150);
+
+        let btnFechar = Array.from(document.querySelectorAll('*')).find(e => e.innerText && e.innerText.trim() === '❌ Fechar');
+        if (btnFechar && btnFechar.offsetHeight > 0) {
+            btnFechar.click(); bolhaEstadoFechado();
+        } else {
+            acionarScriptMaster();
+        }
+    };
+
+    wrapper.appendChild(bolha);
+    document.body.appendChild(wrapper);
+
+    // ==========================================
+    // ⚡ INJETOR DE BOTÕES NAS LINHAS DA TABELA
+    // ==========================================
+    function injetarBotoesNaTabela() {
+        const linhas = document.querySelectorAll('table tbody tr');
+
+        linhas.forEach(linha => {
+            const colunas = linha.querySelectorAll('td');
+            if(colunas.length < 6) return; // Garante que é uma linha de cliente real
+
+            const colunaAcoes = colunas[colunas.length - 1]; // A última coluna (Ações)
+
+            // Extrai o nome do usuário (Coluna 3)
+            let username = colunas[2] ? colunas[2].innerText.trim() : '';
+
+            // Só injeta se a linha tiver um usuário válido e ainda não tiver o botão
+            if (colunaAcoes && username !== '' && !linha.querySelector('.btn-sync-inline')) {
+
+                const btnSync = document.createElement('button');
+                btnSync.className = 'btn-sync-inline';
+                btnSync.innerHTML = '🔄 Sync Master';
+
+                btnSync.onclick = (e) => {
+                    e.preventDefault();
+
+                    btnSync.innerHTML = '⚡ Abrindo...';
+                    btnSync.style.background = '#f59e0b';
+
+                    let comentarios = colunas[5] ? colunas[5].innerText.trim() : '';
+
+                    // Procura o MAC no meio dos comentários
+                    let macEncontrado = "";
+                    const regexMac = /([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})/i;
+                    const match = comentarios.match(regexMac);
+                    if (match) macEncontrado = match[0];
+                    if (!macEncontrado) macEncontrado = comentarios;
+
+                    // 2. Camuflagem DOM (Cria os campos invisíveis para o seu MasterX ler)
+                    let spoofDiv = document.getElementById('omini-spoof-dom');
+                    if (!spoofDiv) {
+                        spoofDiv = document.createElement('div');
+                        spoofDiv.id = 'omini-spoof-dom';
+                        spoofDiv.style.display = 'none';
+                        document.body.appendChild(spoofDiv);
+                    }
+
+                    // Injeta os dados (Usuário e Comentários/MAC) e deixa a senha em branco
+                    spoofDiv.innerHTML = `
+                        <input id="username" name="username" value="${username}">
+                        <input id="usuario" name="usuario" value="${username}">
+                        <input id="password" name="password" value="">
+                        <input id="senha" name="senha" value="">
+                        <textarea id="notes" name="notes">${macEncontrado}</textarea>
+                        <textarea id="comentarios" name="comentarios">${macEncontrado}</textarea>
+                        <input id="mac" name="mac" value="${macEncontrado}">
+                    `;
+
+                    // 3. Dispara a janela do MasterX instantaneamente
+                    acionarScriptMaster();
+
+                    // Força a inserção dos dados na janela caso o script MasterX demore a ler
+                    let tentativas = 0;
+                    let watcher = setInterval(() => {
+                        tentativas++;
+                        let modal = document.getElementById('omini-sync-card-premium') || document.querySelector('div[style*="z-index: 2147483646"]');
+                        if (modal) {
+                            let inputs = modal.querySelectorAll('input');
+                            let textareas = modal.querySelectorAll('textarea');
+
+                            if (inputs.length > 0 && inputs[0].value === '') inputs[0].value = username;
+
+                            if (textareas.length > 0 && textareas[0].value === '') {
+                                textareas[0].value = macEncontrado;
+                            } else if (inputs.length > 2 && inputs[inputs.length-1].value === '') {
+                                inputs[inputs.length-1].value = macEncontrado;
+                            }
+                            clearInterval(watcher);
+                        }
+                        if (tentativas > 20) clearInterval(watcher);
+                    }, 200);
+
+                    // Devolve o visual do botão
+                    setTimeout(() => {
+                        btnSync.innerHTML = '🔄 Sync Master';
+                        btnSync.style.background = 'linear-gradient(135deg, #0284c7, #0ea5e9)';
+                    }, 1500);
+                };
+
+                colunaAcoes.appendChild(btnSync);
+            }
+        });
+    }
+
+    // ==========================================
+    // 🛡️ O CÃO DE GUARDA (Mantém a Janela M Formatada)
+    // ==========================================
+    setInterval(() => {
+        injetarBotoesNaTabela();
+
+        let btnFechar = Array.from(document.querySelectorAll('*')).find(e => e.innerText && e.innerText.trim() === '❌ Fechar');
+
+        if (btnFechar) {
+            let card = btnFechar.parentElement;
+            while(card && card.tagName === 'DIV') {
+                let bg = window.getComputedStyle(card).backgroundColor;
+                if (bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') break;
+                card = card.parentElement;
+            }
+
+            if (card && !card.dataset.ominiFormatado) {
+                card.dataset.ominiFormatado = "sim";
+                card.id = "omini-sync-card-premium";
+
+                let backdrop = card.parentElement;
+                if (backdrop && window.getComputedStyle(backdrop).position === 'fixed') {
+                    backdrop.style.background = 'transparent';
+                    backdrop.style.pointerEvents = 'none';
+                    card.style.pointerEvents = 'auto';
+                }
+
+                card.style.position = 'fixed';
+                card.style.top = '130px';
+                card.style.left = 'auto';
+                card.style.bottom = 'auto';
+                card.style.right = '75px';
+                card.style.transform = 'scale(0.85)';
+                card.style.transformOrigin = 'top right';
+                card.style.margin = '0';
+                card.style.zIndex = '2147483646';
+
+                document.body.style.overflow = 'auto';
+
+                btnFechar.addEventListener('click', () => {
+                    bolhaEstadoFechado();
+                });
+            }
+        }
+    }, 500);
+})();
