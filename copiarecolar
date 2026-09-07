@@ -1,250 +1,245 @@
 // ==UserScript==
-// @name         SYNC MASTER - TVS (Sniper Nativo)
+// @name         SYNC MASTER - TVS (Interface Visual)
 // @namespace    http://tampermonkey.net/
-// @version      2.0
-// @description  Bolha M Roxa + Botão Sync na Tabela (Leitura Direta Anti-Erros)
+// @version      5.1
+// @description  Janela de controlo total embutida para o TVS (Filtro de Data Ativo)
 // @author       Comandante & Omini
 // @match        *://*.lookdefense.top/*
 // @match        *://lookdefense.top/*
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @connect      *
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    if (document.getElementById('omini-bolha-tvs-wrapper')) return;
+    console.log("🟪 SYNC MASTER TVS: Interface Visual Armada (v5.1 - Filtro de Data)...");
 
-    console.log("🟪 SYNC MASTER - TVS: Script iniciado (Versão 2.0 - Sniper Nativo na Tabela)...");
-
-    // Mantém a memória global para compatibilidade com o Worker antigo
-    window.lastTvsData = { u: '', p: '', e: '', n: '' };
+    const WORKER_URL = "https://tvsmastersync.lucassheiksk41.workers.dev";
 
     // ==========================================
-    // 🎨 ESTILOS PREMIUM ROXO (M e Botões da Tabela)
+    // 🎨 ESTILOS DA TELA
     // ==========================================
-    const stylePremium = document.createElement('style');
-    stylePremium.innerHTML = `
-        #omini-sync-card-premium {
-            background: #0f172a !important; border: 1px solid #8b5cf6 !important;
-            border-radius: 8px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.9), 0 0 10px rgba(139, 92, 246, 0.3) !important;
-            font-family: 'Segoe UI', sans-serif !important;
+    const estilos = document.createElement('style');
+    estilos.innerHTML = `
+        .btn-sync-master {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: none;
+            padding: 5px 10px; border-radius: 6px; font-weight: 700; cursor: pointer;
+            font-size: 11px; margin-left: 8px; margin-top: 4px; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
+            transition: all 0.2s; display: inline-block;
         }
-        #omini-sync-card-premium * { color: #f8fafc !important; border-color: #334155 !important; }
-        #omini-sync-card-premium input, #omini-sync-card-premium textarea, #omini-sync-card-premium select {
-            background: #020617 !important; color: #c4b5fd !important; border: 1px solid #6d28d9 !important;
-            border-radius: 4px !important; outline: none !important;
-        }
-        #omini-sync-card-premium input:focus, #omini-sync-card-premium textarea:focus { border-color: #a78bfa !important; }
-        #omini-sync-card-premium button {
-            background: linear-gradient(135deg, #6d28d9, #8b5cf6) !important; color: #fff !important;
-            border: 1px solid #a78bfa !important; box-shadow: 0 0 10px rgba(139, 92, 246, 0.4) !important;
-            border-radius: 4px !important; font-weight: 900 !important; cursor: pointer !important; transition: 0.2s !important;
-        }
-        #omini-sync-card-premium button:hover { filter: brightness(1.2) !important; }
+        .btn-sync-master:hover { transform: scale(1.05); filter: brightness(1.2); }
 
-        /* Botão Inline da Tabela (Roxo TVS) */
-        .btn-sync-inline {
-            background: linear-gradient(135deg, #6d28d9, #8b5cf6); color: white; border: none; border-radius: 4px;
-            padding: 5px 12px; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 8px; margin-top: 4px;
-            box-shadow: 0 0 8px rgba(139, 92, 246, 0.4); transition: 0.2s; vertical-align: middle; display: inline-block;
+        #om-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            z-index: 2147483646; display: none; justify-content: center; align-items: center;
         }
-        .btn-sync-inline:hover { filter: brightness(1.2); }
+
+        #om-modal {
+            background: #0f172a; border: 1px solid #8b5cf6; border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px rgba(139, 92, 246, 0.3);
+            width: 320px; padding: 20px; font-family: 'Segoe UI', sans-serif; color: #f8fafc;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+
+        #om-modal h3 { margin: 0; text-align: center; color: #fff; font-size: 18px; text-shadow: 0 0 8px #a78bfa; }
+        #om-modal p.alvo { margin: -8px 0 10px 0; text-align: center; font-size: 10px; color: #94a3b8; letter-spacing: 1px; font-weight: bold; }
+
+        .om-row { display: flex; gap: 10px; }
+        .om-col { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .om-col label { font-size: 11px; color: #cbd5e1; font-weight: 600; }
+
+        #om-modal input, #om-modal textarea {
+            background: #020617; color: #c4b5fd; border: 1px solid #6d28d9; border-radius: 6px;
+            padding: 8px; font-size: 12px; outline: none; transition: 0.2s; width: 100%; box-sizing: border-box;
+        }
+        #om-modal input:focus, #om-modal textarea:focus { border-color: #a78bfa; box-shadow: 0 0 8px rgba(167, 139, 250, 0.3); }
+        #om-modal textarea { resize: none; height: 50px; }
+
+        .om-grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; }
+        .om-btn-acao {
+            background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white; border: 1px solid #8b5cf6;
+            padding: 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(91, 33, 182, 0.5); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
+        .om-btn-acao:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+        #om-fechar {
+            background: #1e293b; color: #ef4444; border: 1px solid #ef4444; margin-top: 5px;
+            padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        #om-fechar:hover { background: #ef4444; color: #fff; }
+
+        #om-status { text-align: center; font-size: 12px; font-weight: bold; min-height: 16px; margin-top: 5px; }
     `;
-    document.head.appendChild(stylePremium);
+    document.head.appendChild(estilos);
 
     // ==========================================
-    // 🟣 A BOLHA M NO TOPO DA TELA
+    // 🧱 CONSTRUÇÃO DA TELA (DOM)
     // ==========================================
-    const wrapper = document.createElement('div');
-    wrapper.id = 'omini-bolha-tvs-wrapper';
-    wrapper.style.cssText = `position: fixed !important; top: 130px !important; right: 15px !important; z-index: 2147483647 !important; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;`;
+    const backdrop = document.createElement('div');
+    backdrop.id = 'om-backdrop';
+    backdrop.innerHTML = `
+        <div id="om-modal">
+            <h3>⚡ Sync -> MasterX</h3>
+            <p class="alvo">ALVO: TVS BACKUP</p>
 
-    const bolha = document.createElement('div');
-    bolha.id = 'omini-bolha-tvs-btn';
-    bolha.style.cssText = `width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #4c1d95, #7c3aed); display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; box-shadow: 0 0 15px rgba(139, 92, 246, 0.6), inset 0 0 8px rgba(139, 92, 246, 0.4); border: 2px solid #a78bfa; transition: transform 0.2s, background 0.2s; user-select: none;`;
-    bolha.innerHTML = `<span style="font-size: 22px; font-weight: 900; font-style: italic; color: #fff; filter: drop-shadow(0 0 5px #a78bfa);">M</span>`;
+            <div class="om-row">
+                <div class="om-col"><label>Usuário:</label><input id="om-user"></div>
+                <div class="om-col"><label>Senha:</label><input id="om-pass"></div>
+            </div>
 
-    function bolhaEstadoAberto() {
-        bolha.innerHTML = `❌`; bolha.style.background = `linear-gradient(135deg, #450a0a, #991b1b)`; bolha.style.borderColor = `#ff0055`;
-    }
+            <div class="om-col">
+                <label>Expiração Correta (+1 p/ Anular Fuso):</label>
+                <input id="om-exp">
+            </div>
 
-    function bolhaEstadoFechado() {
-        bolha.innerHTML = `<span style="font-size: 22px; font-weight: 900; font-style: italic; color: #fff; filter: drop-shadow(0 0 5px #a78bfa);">M</span>`;
-        bolha.style.background = `linear-gradient(135deg, #4c1d95, #7c3aed)`; bolha.style.borderColor = `#a78bfa`;
-    }
+            <div class="om-col">
+                <label>Notas / MAC:</label>
+                <textarea id="om-notas"></textarea>
+            </div>
 
-    function acionarScriptMaster() {
-        let linkDoWorkerTVS = 'https://tvsmastersync.lucassheiksk41.workers.dev';
-        let s = document.createElement('script');
-        s.src = linkDoWorkerTVS + '?t=' + Date.now();
-        document.body.appendChild(s);
-        bolhaEstadoAberto();
-    }
+            <div id="om-status"></div>
 
-    bolha.onclick = () => {
-        bolha.style.transform = 'scale(0.8)';
-        setTimeout(() => bolha.style.transform = 'none', 150);
+            <div class="om-grid-botoes">
+                <button class="om-btn-acao" id="btn-criar">✨ CRIAR</button>
+                <button class="om-btn-acao" id="btn-renovar">💵 RENOVAR</button>
+                <button class="om-btn-acao" id="btn-editar">🖍️ EDITAR</button>
+                <button class="om-btn-acao" id="btn-apagar">🗑️ APAGAR</button>
+            </div>
 
-        let btnFechar = Array.from(document.querySelectorAll('*')).find(e => e.innerText && e.innerText.trim() === '❌ Fechar');
-        if (btnFechar && btnFechar.offsetHeight > 0) {
-            btnFechar.click(); bolhaEstadoFechado();
-        } else {
-            acionarScriptMaster();
+            <button id="om-fechar">❌ Fechar</button>
+        </div>
+    `;
+    document.body.appendChild(backdrop);
+
+    // ==========================================
+    // 🔍 RADAR: Lê os Cabeçalhos da Tabela TVS
+    // ==========================================
+    function obterColunasTVS(linha) {
+        let tabela = linha.closest('table');
+        let idxUser = 1, idxSenha = 2, idxNotas = 4, idxVenc = 5;
+
+        if (tabela) {
+            let cabecalhos = Array.from(tabela.querySelectorAll('thead th'));
+            if (cabecalhos.length > 0) {
+                let achouUser = cabecalhos.findIndex(th => th.innerText.trim().toUpperCase().includes('USUÁRIO'));
+                let achouSenha = cabecalhos.findIndex(th => th.innerText.trim().toUpperCase().includes('SENHA'));
+                let achouNotas = cabecalhos.findIndex(th => th.innerText.trim().toUpperCase().includes('NOTAS'));
+                let achouVenc = cabecalhos.findIndex(th => th.innerText.trim().toUpperCase().includes('VENCIMENTO') || th.innerText.trim().toUpperCase().includes('EXPIRAÇÃO'));
+
+                if (achouUser !== -1) idxUser = achouUser;
+                if (achouSenha !== -1) idxSenha = achouSenha;
+                if (achouNotas !== -1) idxNotas = achouNotas;
+                if (achouVenc !== -1) idxVenc = achouVenc;
+            }
         }
-    };
-
-    wrapper.appendChild(bolha);
-    document.body.appendChild(wrapper);
+        return { idxUser, idxSenha, idxNotas, idxVenc };
+    }
 
     // ==========================================
-    // ⚡ INJETOR DE BOTÕES NAS LINHAS DA TABELA (TVS)
+    // ⚙️ LÓGICA DE INJEÇÃO NA TABELA
     // ==========================================
-    function injetarBotoesNaTabela() {
-        const linhas = document.querySelectorAll('table tbody tr');
+    function injetarBotoesSync() {
+        let linhas = document.querySelectorAll('table tbody tr');
 
         linhas.forEach(linha => {
-            const cols = linha.querySelectorAll('td');
-            if(cols.length < 5) return;
+            if (linha.querySelector('.btn-sync-master')) return;
+            let colunas = linha.querySelectorAll('td');
+            if (colunas.length < 5) return;
 
-            const colunaAcoes = cols[cols.length - 1]; // Geralmente a última coluna tem as ações (+30 / Menu)
+            let tdAcoes = colunas[colunas.length - 1];
+            let btnSync = document.createElement('button');
+            btnSync.innerText = '🔄 Sync Master';
+            btnSync.className = 'btn-sync-master';
 
-            // Só injeta se ainda não tiver o botão
-            if (colunaAcoes && !linha.querySelector('.btn-sync-inline')) {
+            btnSync.onclick = function(e) {
+                e.preventDefault(); e.stopPropagation();
+                abrirPainelVisual(colunas, linha);
+            };
 
-                // 🕵️ RADAR INTELIGENTE (Procura a coluna Status para não se perder)
-                let statusIdx = -1;
-                for (let j = 0; j < Math.min(6, cols.length); j++) {
-                    let txt = cols[j].innerText.trim().toLowerCase();
-                    if (txt === 'ativo' || txt === 'inativo' || txt === 'bloqueado' || txt.includes('vencido') || txt.includes('expirado') || txt === 'teste') {
-                        statusIdx = j;
-                        break;
-                    }
-                }
-
-                // Se achou o status e tem colunas suficientes para trás e para frente
-                if (statusIdx >= 2) {
-                    let usuario = cols[statusIdx - 2].innerText.trim().split('\n')[0].trim();
-                    let notas = cols[statusIdx + 2] ? cols[statusIdx + 2].innerText.trim() : '';
-
-                    if (usuario !== '') {
-                        const btnSync = document.createElement('button');
-                        btnSync.className = 'btn-sync-inline';
-                        btnSync.innerHTML = '🔄 Sync Master';
-
-                        btnSync.onclick = (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-
-                            btnSync.innerHTML = '⚡ Abrindo...';
-                            btnSync.style.background = '#f59e0b';
-
-                            // Extrai o MAC do meio das notas
-                            let macEncontrado = "";
-                            const regexMac = /([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})/i;
-                            const match = notas.match(regexMac);
-                            if (match) macEncontrado = match[0];
-                            if (!macEncontrado) macEncontrado = notas;
-
-                            // 1. Atualiza a memória global (Caso o Worker do TVS use isso)
-                            window.lastTvsData = { u: usuario, p: '', e: '', n: notas };
-
-                            // 2. Camuflagem DOM (Caso o Worker leia da tela)
-                            let spoofDiv = document.getElementById('omini-spoof-dom');
-                            if (!spoofDiv) {
-                                spoofDiv = document.createElement('div');
-                                spoofDiv.id = 'omini-spoof-dom';
-                                spoofDiv.style.display = 'none';
-                                document.body.appendChild(spoofDiv);
-                            }
-                            spoofDiv.innerHTML = `
-                                <input id="username" name="username" value="${usuario}">
-                                <input id="usuario" name="usuario" value="${usuario}">
-                                <textarea id="notes" name="notes">${macEncontrado}</textarea>
-                                <textarea id="comentarios" name="comentarios">${macEncontrado}</textarea>
-                                <input id="mac" name="mac" value="${macEncontrado}">
-                            `;
-
-                            // 3. Dispara a janela do MasterX instantaneamente
-                            acionarScriptMaster();
-
-                            // 4. Preenchimento Forçado do Card
-                            let tentativas = 0;
-                            let watcher = setInterval(() => {
-                                tentativas++;
-                                let modal = document.getElementById('omini-sync-card-premium') || document.querySelector('div[style*="z-index: 2147483646"]');
-                                if (modal) {
-                                    let inputs = modal.querySelectorAll('input');
-                                    let textareas = modal.querySelectorAll('textarea');
-
-                                    if (inputs.length > 0 && inputs[0].value === '') inputs[0].value = usuario;
-
-                                    if (textareas.length > 0 && textareas[0].value === '') {
-                                        textareas[0].value = macEncontrado;
-                                    } else if (inputs.length > 2 && inputs[inputs.length-1].value === '') {
-                                        inputs[inputs.length-1].value = macEncontrado;
-                                    }
-                                    clearInterval(watcher);
-                                }
-                                if (tentativas > 20) clearInterval(watcher);
-                            }, 200);
-
-                            // Devolve o visual do botão
-                            setTimeout(() => {
-                                btnSync.innerHTML = '🔄 Sync Master';
-                                btnSync.style.background = 'linear-gradient(135deg, #6d28d9, #8b5cf6)';
-                            }, 1500);
-                        };
-
-                        colunaAcoes.appendChild(btnSync);
-                    }
-                }
-            }
+            tdAcoes.appendChild(btnSync);
         });
     }
 
     // ==========================================
-    // 🛡️ O CÃO DE GUARDA (Mantém a Janela formatada)
+    // 🖥️ LÓGICA DE ABERTURA E ENVIO
     // ==========================================
-    setInterval(() => {
-        injetarBotoesNaTabela();
+    function abrirPainelVisual(colunas, linha) {
+        let indices = obterColunasTVS(linha);
+        let usuario = colunas[indices.idxUser] ? colunas[indices.idxUser].innerText.trim().split('\n')[0].trim() : '';
+        let senha = colunas[indices.idxSenha] ? colunas[indices.idxSenha].innerText.trim() : '';
+        let notas = colunas[indices.idxNotas] ? colunas[indices.idxNotas].innerText.trim() : '';
 
-        let btnFechar = Array.from(document.querySelectorAll('*')).find(e => e.innerText && e.innerText.trim() === '❌ Fechar');
+        // 🎯 O FILTRO DA DATA (Remove horas e textos como "Em dia")
+        let expiracaoBruta = colunas[indices.idxVenc] ? colunas[indices.idxVenc].innerText.trim() : '';
+        let matchData = expiracaoBruta.match(/(\d{2}\/\d{2}\/\d{4})/);
+        let expiracao = matchData ? matchData[1] : expiracaoBruta; // Se achar a data, puxa só a data.
 
-        if (btnFechar) {
-            let card = btnFechar.parentElement;
-            while(card && card.tagName === 'DIV') {
-                let bg = window.getComputedStyle(card).backgroundColor;
-                if (bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') break;
-                card = card.parentElement;
-            }
+        // Preenche a tela
+        document.getElementById('om-user').value = usuario;
+        document.getElementById('om-pass').value = senha;
+        document.getElementById('om-exp').value = expiracao;
+        document.getElementById('om-notas').value = notas;
+        document.getElementById('om-status').innerText = "";
 
-            if (card && !card.dataset.ominiFormatado) {
-                card.dataset.ominiFormatado = "sim";
-                card.id = "omini-sync-card-premium";
+        // Mostra a tela
+        backdrop.style.display = 'flex';
+    }
 
-                let backdrop = card.parentElement;
-                if (backdrop && window.getComputedStyle(backdrop).position === 'fixed') {
-                    backdrop.style.background = 'transparent';
-                    backdrop.style.pointerEvents = 'none';
-                    card.style.pointerEvents = 'auto';
+    // Função de Disparo
+    function acionarWorker(acaoStr) {
+        const statusDiv = document.getElementById('om-status');
+        const botoes = document.querySelectorAll('.om-btn-acao');
+
+        statusDiv.style.color = '#f59e0b';
+        statusDiv.innerText = `⏳ A Executar: ${acaoStr.toUpperCase()}...`;
+        botoes.forEach(b => b.disabled = true);
+
+        let payload = {
+            acao: acaoStr,
+            usuario_cliente: document.getElementById('om-user').value,
+            senha_cliente: document.getElementById('om-pass').value,
+            data_expiracao: document.getElementById('om-exp').value,
+            novo_nome: document.getElementById('om-notas').value
+        };
+
+        GM_xmlhttpRequest({
+            method: "POST",
+            url: WORKER_URL,
+            headers: { "Content-Type": "application/json" },
+            data: JSON.stringify(payload),
+            onload: function(response) {
+                try {
+                    let res = JSON.parse(response.responseText);
+                    if (res.status === "sucesso") {
+                        statusDiv.style.color = '#10b981'; // Verde
+                        statusDiv.innerText = res.msg;
+                    } else {
+                        statusDiv.style.color = '#ef4444'; // Vermelho
+                        statusDiv.innerText = res.msg;
+                    }
+                } catch(e) {
+                    statusDiv.style.color = '#ef4444';
+                    statusDiv.innerText = "❌ Erro ao ler resposta do Worker.";
                 }
-
-                card.style.position = 'fixed';
-                card.style.top = '130px';
-                card.style.left = 'auto';
-                card.style.bottom = 'auto';
-                card.style.right = '75px';
-                card.style.transform = 'scale(0.85)';
-                card.style.transformOrigin = 'top right';
-                card.style.margin = '0';
-                card.style.zIndex = '2147483646';
-
-                document.body.style.overflow = 'auto';
-
-                btnFechar.addEventListener('click', () => {
-                    bolhaEstadoFechado();
-                });
+                botoes.forEach(b => b.disabled = false);
+            },
+            onerror: function() {
+                statusDiv.style.color = '#ef4444';
+                statusDiv.innerText = "❌ Falha de Ligação com a Cloudflare.";
+                botoes.forEach(b => b.disabled = false);
             }
-        }
-    }, 500);
+        });
+    }
+
+    // Mapeamento dos Botões da Tela
+    document.getElementById('btn-criar').onclick = () => acionarWorker('criar');
+    document.getElementById('btn-renovar').onclick = () => acionarWorker('renovar');
+    document.getElementById('btn-editar').onclick = () => acionarWorker('editar');
+    document.getElementById('btn-apagar').onclick = () => acionarWorker('deletar');
+    document.getElementById('om-fechar').onclick = () => backdrop.style.display = 'none';
+
+    setInterval(injetarBotoesSync, 1000);
 })();
