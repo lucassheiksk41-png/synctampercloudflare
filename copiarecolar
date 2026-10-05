@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         SYNC MASTER - DNA (Renovação Expressa)
 // @namespace    http://tampermonkey.net/
-// @version      8.7
-// @description  Bolha M Inteligente (Data +1 Fuso, Nome Completo na Observação)
+// @version      8.8
+// @description  Sistemas Separados: Scanner na Bolha M / Express na Tabela
 // @author       Comandante & Omini
 // @match        *://cms.omini.fit/*
 // @match        *://*.omini.fit/*
@@ -18,7 +18,7 @@
 
     if (document.getElementById('omini-bolha-master-wrapper')) return;
 
-    console.log("🟦 SYNC MASTER: Iniciando Versão 8.7 (Sniper de Vencimento com +1 Dia)...");
+    console.log("🟦 SYNC MASTER: Iniciando Versão 8.8 (Sistemas Separados e Blindados)...");
 
     // ==========================================
     // 🎨 ESTILOS PREMIUM
@@ -48,17 +48,15 @@
     document.head.appendChild(stylePremium);
 
     // ==========================================
-    // 🧠 SCANNER UNIVERSAL DE TELA
+    // 🧠 SCANNER DA BOLHA M (Para a página detalhada do cliente)
     // ==========================================
     function forcarPreenchimentoDOM() {
         let texto = document.body.innerText || "";
         
-        // 1. Extrair Usuário
         let user = "";
         let mUser = texto.match(/Usu[aá]rio[\s\n]*([A-Za-z0-9_.-]+)/i);
         if (mUser) user = mUser[1].trim();
 
-        // 2. Extrair Senha
         let pass = "";
         let mPass = texto.match(/Senha[\s\n]*([A-Za-z0-9_.-]+)/i);
         if (mPass) {
@@ -66,30 +64,20 @@
             pass = pass.replace(/visibility|remove_red_eye/ig, '').trim(); 
         }
 
-        // 3. Extrair Data de Expiração e ADICIONAR 1 DIA (+1 Fuso)
         let dataExp = "";
         let splitVencimento = texto.split(/Vencimento/i);
         if (splitVencimento.length > 1) {
             let matchData = splitVencimento[1].match(/(\d{2})\/(\d{2})\/(\d{4})/);
             if (matchData) {
                 let dia = parseInt(matchData[1], 10);
-                let mes = parseInt(matchData[2], 10) - 1; // JS conta meses de 0 a 11
+                let mes = parseInt(matchData[2], 10) - 1; 
                 let ano = parseInt(matchData[3], 10);
-
-                // Cria o calendário e soma 1 dia
                 let dataCalculada = new Date(ano, mes, dia);
                 dataCalculada.setDate(dataCalculada.getDate() + 1);
-
-                // Formata de volta para YYYY-MM-DD
-                let novoDia = String(dataCalculada.getDate()).padStart(2, '0');
-                let novoMes = String(dataCalculada.getMonth() + 1).padStart(2, '0');
-                let novoAno = dataCalculada.getFullYear();
-
-                dataExp = `${novoAno}-${novoMes}-${novoDia}`;
+                dataExp = `${dataCalculada.getFullYear()}-${String(dataCalculada.getMonth() + 1).padStart(2, '0')}-${String(dataCalculada.getDate()).padStart(2, '0')}`;
             }
         }
 
-        // 4. Extrair Nome Completo e MAC
         let notesText = "";
         let splitObs = texto.split(/Observa[çc][õo]es/i);
         if (splitObs.length > 1) {
@@ -97,15 +85,10 @@
             if (linhas.length > 0) notesText = linhas[0]; 
         }
 
-        // Cria a armadilha de dados pro MasterX ler na retaguarda
-        let spoofDiv = document.getElementById('omini-spoof-dom');
-        if (!spoofDiv) {
-            spoofDiv = document.createElement('div');
-            spoofDiv.id = 'omini-spoof-dom';
-            spoofDiv.style.display = 'none';
-            document.body.appendChild(spoofDiv);
-        }
-
+        let spoofDiv = document.getElementById('omini-spoof-dom') || document.createElement('div');
+        spoofDiv.id = 'omini-spoof-dom'; spoofDiv.style.display = 'none';
+        
+        // Só injeta se não estiver na tabela geral
         if(user || pass || notesText || dataExp) {
             spoofDiv.innerHTML = `
                 <input id="username" name="username" value="${user}">
@@ -114,6 +97,7 @@
                 <textarea id="notes" name="notes">${notesText}</textarea>
             `;
         }
+        if(!document.getElementById('omini-spoof-dom')) document.body.appendChild(spoofDiv);
         return { user, pass, dataExp, notesText };
     }
 
@@ -128,12 +112,12 @@
             if (modal) {
                 let inputs = modal.querySelectorAll('input');
                 if(inputs.length >= 4) {
-                    if(inputs[0].value === '' && dados.user) inputs[0].value = dados.user;
-                    if(inputs[1].value === '' && dados.pass) inputs[1].value = dados.pass;
-                    if(inputs[2].value === '' && dados.dataExp) inputs[2].value = dados.dataExp;
-                    if(inputs[3].value === '' && dados.notesText) inputs[3].value = dados.notesText;
+                    if(inputs[0].value === '' && dados.user !== undefined) inputs[0].value = dados.user;
+                    if(inputs[1].value === '' && dados.pass !== undefined) inputs[1].value = dados.pass;
+                    if(inputs[2].value === '' && dados.dataExp !== undefined) inputs[2].value = dados.dataExp;
+                    if(inputs[3].value === '' && dados.notesText !== undefined) inputs[3].value = dados.notesText;
                 } 
-                else if (inputs.length > 0 && inputs[inputs.length-1].value === '' && dados.notesText) {
+                else if (inputs.length > 0 && inputs[inputs.length-1].value === '' && dados.notesText !== undefined) {
                     inputs[inputs.length-1].value = dados.notesText;
                 }
                 clearInterval(watcher);
@@ -180,7 +164,7 @@
     document.body.appendChild(wrapper);
 
     // ==========================================
-    // ⚡ INJETOR: BOTÕES NAS LINHAS DA TABELA GERAL
+    // ⚡ INJETOR BLINDADO: BOTÕES DA TABELA GERAL (RENOVAÇÃO EXPRESSA)
     // ==========================================
     function injetarBotoesNaTabela() {
         const linhas = document.querySelectorAll('table tbody tr');
@@ -195,6 +179,7 @@
                 const btnSync = document.createElement('button');
                 btnSync.className = 'btn-sync-inline';
                 btnSync.innerHTML = '🔄 Sync Master';
+                
                 btnSync.onclick = (e) => {
                     e.preventDefault();
                     btnSync.innerHTML = '⚡ Abrindo...';
@@ -203,10 +188,26 @@
                     let comentarios = colunas[5] ? colunas[5].innerText.trim() : '';
                     let spoofDiv = document.getElementById('omini-spoof-dom') || document.createElement('div');
                     spoofDiv.id = 'omini-spoof-dom'; spoofDiv.style.display = 'none';
-                    spoofDiv.innerHTML = `<input id="username" value="${username}"><textarea id="notes">${comentarios}</textarea>`;
+                    
+                    // Injeta APENAS o usuário daquela linha, ignora o resto da tela!
+                    spoofDiv.innerHTML = `
+                        <input id="username" name="username" value="${username}">
+                        <input id="password" name="password" value="">
+                        <input id="expire_date" name="expire_date" value="">
+                        <textarea id="notes" name="notes">${comentarios}</textarea>
+                    `;
                     if(!document.getElementById('omini-spoof-dom')) document.body.appendChild(spoofDiv);
 
-                    bolha.click(); 
+                    // Aciona o script principal SEM passar pelo scanner global
+                    let s = document.createElement('script');
+                    s.src = 'https://syncmaster.lucassheiksk41.workers.dev?t=' + Date.now();
+                    document.body.appendChild(s);
+                    
+                    bolha.innerHTML = `❌`; bolha.style.background = `linear-gradient(135deg, #450a0a, #991b1b)`; bolha.style.borderColor = `#ff0055`;
+                    
+                    // Força a injeção do utilizador na tabela limpa
+                    injetarValoresNoModal({ user: username, pass: "", dataExp: "", notesText: comentarios });
+
                     setTimeout(() => { btnSync.innerHTML = '🔄 Sync Master'; btnSync.style.background = 'linear-gradient(135deg, #0284c7, #0ea5e9)'; }, 1500);
                 };
                 colunaAcoes.appendChild(btnSync);
