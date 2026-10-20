@@ -1,238 +1,322 @@
 // ==UserScript==
-// @name         SYNC MASTER - DNA (Renovação Expressa)
+// @name         OMINI SNIPER | IBO Pro App (Motor Escravo)
 // @namespace    http://tampermonkey.net/
-// @version      8.8
-// @description  Sistemas Separados: Scanner na Bolha M / Express na Tabela
-// @author       Comandante & Omini
-// @match        *://cms.omini.fit/*
-// @match        *://*.omini.fit/*
-// @match        *://*.dna-go.com/*
-// @match        *://*.dnago.com/*
-// @match        *://painel.dnago/*
-// @match        *://*/*dnago*
+// @version      7.10
+// @description  Anti-Congelamento de Login + Esteira Rápida Restaurada (1.5s)
+// @author       Você & Omini
+// @match        *://*.iboproapp.com/*
+// @updateURL    https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/escravo_ibo_injector.user.js
+// @downloadURL  https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/escravo_ibo_injector.user.js
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    if (document.getElementById('omini-bolha-master-wrapper')) return;
+    const WORKER_URL = "https://motorescravo.lucassheiksk41.workers.dev";
 
-    console.log("🟦 SYNC MASTER: Iniciando Versão 8.8 (Sistemas Separados e Blindados)...");
+    // =========================================================
+    // 1. MODO RADAR (A PÁGINA FANTASMA /escravo)
+    // =========================================================
+    if (window.location.pathname.toLowerCase().includes('/escravo')) {
+        document.title = "🖥️ ESCRAVO OMINI";
+        document.body.style.background = "#111827";
 
-    // ==========================================
-    // 🎨 ESTILOS PREMIUM
-    // ==========================================
-    const stylePremium = document.createElement('style');
-    stylePremium.innerHTML = `
-        #omini-sync-card-premium {
-            background: #0f172a !important; border: 1px solid #0ea5e9 !important; border-radius: 8px !important;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.9), 0 0 10px rgba(14, 165, 233, 0.3) !important; font-family: 'Segoe UI', sans-serif !important;
-        }
-        #omini-sync-card-premium * { color: #f8fafc !important; border-color: #334155 !important; }
-        #omini-sync-card-premium input, #omini-sync-card-premium textarea, #omini-sync-card-premium select {
-            background: #020617 !important; color: #38bdf8 !important; border: 1px solid #0369a1 !important; border-radius: 4px !important; outline: none !important;
-        }
-        #omini-sync-card-premium input:focus, #omini-sync-card-premium textarea:focus { border-color: #38bdf8 !important; }
-        #omini-sync-card-premium button {
-            background: linear-gradient(135deg, #0284c7, #0ea5e9) !important; color: #fff !important; border: 1px solid #38bdf8 !important;
-            box-shadow: 0 0 10px rgba(14, 165, 233, 0.4) !important; border-radius: 4px !important; font-weight: 900 !important; cursor: pointer !important; transition: 0.2s !important;
-        }
-        #omini-sync-card-premium button:hover { filter: brightness(1.2) !important; }
-        .btn-sync-inline {
-            background: linear-gradient(135deg, #0284c7, #0ea5e9); color: white; border: none; border-radius: 4px; padding: 5px 12px; font-size: 12px;
-            font-weight: bold; cursor: pointer; margin-left: 8px; margin-top: 4px; box-shadow: 0 0 8px rgba(14, 165, 233, 0.4); transition: 0.2s; display: inline-block;
-        }
-        .btn-sync-inline:hover { filter: brightness(1.2); }
-    `;
-    document.head.appendChild(stylePremium);
+        let pisca = false;
 
-    // ==========================================
-    // 🧠 SCANNER DA BOLHA M (Para a página detalhada do cliente)
-    // ==========================================
-    function forcarPreenchimentoDOM() {
-        let texto = document.body.innerText || "";
-        
-        let user = "";
-        let mUser = texto.match(/Usu[aá]rio[\s\n]*([A-Za-z0-9_.-]+)/i);
-        if (mUser) user = mUser[1].trim();
+        setInterval(async () => {
+            pisca = !pisca;
+            document.body.innerHTML = `<h1 style='color:white; text-align:center; margin-top:20%; font-family:sans-serif;'>🖥️ MODO ESCRAVO ATIVO (v7.10)<br><br><span style='font-size:20px; color:${pisca ? '#10b981' : '#34d399'};'>Aguardando ordens... ${pisca ? '⏳' : '⌛'}</span></h1>`;
 
-        let pass = "";
-        let mPass = texto.match(/Senha[\s\n]*([A-Za-z0-9_.-]+)/i);
-        if (mPass) {
-            pass = mPass[1].trim();
-            pass = pass.replace(/visibility|remove_red_eye/ig, '').trim(); 
-        }
+            try {
+                let req = await fetch(`${WORKER_URL}/get-fila`);
+                let res = await req.json();
 
-        let dataExp = "";
-        let splitVencimento = texto.split(/Vencimento/i);
-        if (splitVencimento.length > 1) {
-            let matchData = splitVencimento[1].match(/(\d{2})\/(\d{2})\/(\d{4})/);
-            if (matchData) {
-                let dia = parseInt(matchData[1], 10);
-                let mes = parseInt(matchData[2], 10) - 1; 
-                let ano = parseInt(matchData[3], 10);
-                let dataCalculada = new Date(ano, mes, dia);
-                dataCalculada.setDate(dataCalculada.getDate() + 1);
-                dataExp = `${dataCalculada.getFullYear()}-${String(dataCalculada.getMonth() + 1).padStart(2, '0')}-${String(dataCalculada.getDate()).padStart(2, '0')}`;
-            }
-        }
-
-        let notesText = "";
-        let splitObs = texto.split(/Observa[çc][õo]es/i);
-        if (splitObs.length > 1) {
-            let linhas = splitObs[1].split('\n').map(l => l.trim()).filter(l => l.length > 2 && !l.match(/Atividade/i));
-            if (linhas.length > 0) notesText = linhas[0]; 
-        }
-
-        let spoofDiv = document.getElementById('omini-spoof-dom') || document.createElement('div');
-        spoofDiv.id = 'omini-spoof-dom'; spoofDiv.style.display = 'none';
-        
-        // Só injeta se não estiver na tabela geral
-        if(user || pass || notesText || dataExp) {
-            spoofDiv.innerHTML = `
-                <input id="username" name="username" value="${user}">
-                <input id="password" name="password" value="${pass}">
-                <input id="expire_date" name="expire_date" value="${dataExp}">
-                <textarea id="notes" name="notes">${notesText}</textarea>
-            `;
-        }
-        if(!document.getElementById('omini-spoof-dom')) document.body.appendChild(spoofDiv);
-        return { user, pass, dataExp, notesText };
-    }
-
-    // ==========================================
-    // 🎯 INJETOR FORÇADO NO MODAL MASTERX
-    // ==========================================
-    function injetarValoresNoModal(dados) {
-        let tentativas = 0;
-        let watcher = setInterval(() => {
-            tentativas++;
-            let modal = document.getElementById('omini-sync-card-premium') || document.querySelector('div[style*="z-index: 2147483646"]');
-            if (modal) {
-                let inputs = modal.querySelectorAll('input');
-                if(inputs.length >= 4) {
-                    if(inputs[0].value === '' && dados.user !== undefined) inputs[0].value = dados.user;
-                    if(inputs[1].value === '' && dados.pass !== undefined) inputs[1].value = dados.pass;
-                    if(inputs[2].value === '' && dados.dataExp !== undefined) inputs[2].value = dados.dataExp;
-                    if(inputs[3].value === '' && dados.notesText !== undefined) inputs[3].value = dados.notesText;
-                } 
-                else if (inputs.length > 0 && inputs[inputs.length-1].value === '' && dados.notesText !== undefined) {
-                    inputs[inputs.length-1].value = dados.notesText;
+                if (res && res.mac) {
+                    await fetch(`${WORKER_URL}/ack-fila`, { method: 'POST', body: JSON.stringify({mac: res.mac}) });
+                    res.etapa = 'LOGIN';
+                    sessionStorage.setItem('omini_payload', JSON.stringify(res));
+                    sessionStorage.removeItem('omini_login_failsafe'); 
+                    window.location.href = "/manage-playlists/login/";
                 }
-                clearInterval(watcher);
-            }
-            if (tentativas > 25) clearInterval(watcher);
-        }, 200);
+            } catch(e) {}
+        }, 1500);
+
+        setTimeout(() => window.location.reload(), 600000);
+        return;
     }
 
-    // ==========================================
-    // 🔵 A BOLHA M NO TOPO DA TELA
-    // ==========================================
-    const wrapper = document.createElement('div');
-    wrapper.id = 'omini-bolha-master-wrapper';
-    wrapper.style.cssText = `position: fixed !important; top: 130px !important; right: 15px !important; z-index: 2147483647 !important; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;`;
+    // =========================================================
+    // 2. MODO INJEÇÃO (Quando ele entra no Login e no Painel)
+    // =========================================================
+    const payload = JSON.parse(sessionStorage.getItem('omini_payload'));
+    if (!payload) return;
 
-    const bolha = document.createElement('div');
-    bolha.id = 'omini-bolha-master-btn';
-    bolha.style.cssText = `width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #0369a1, #0ea5e9); display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; box-shadow: 0 0 15px rgba(14, 165, 233, 0.6), inset 0 0 8px rgba(14, 165, 233, 0.4); border: 2px solid #22d3ee; transition: transform 0.2s, background 0.2s; user-select: none;`;
-    bolha.innerHTML = `<span style="font-size: 22px; font-weight: 900; font-style: italic; color: #fff; filter: drop-shadow(0 0 5px #22d3ee);">M</span>`;
-
-    function bolhaEstadoFechado() {
-        bolha.innerHTML = `<span style="font-size: 22px; font-weight: 900; font-style: italic; color: #fff; filter: drop-shadow(0 0 5px #22d3ee);">M</span>`;
-        bolha.style.background = `linear-gradient(135deg, #0369a1, #0ea5e9)`; bolha.style.borderColor = `#22d3ee`;
-    }
-
-    bolha.onclick = () => {
-        bolha.style.transform = 'scale(0.8)';
-        setTimeout(() => bolha.style.transform = 'none', 150);
-
-        let btnFechar = Array.from(document.querySelectorAll('*')).find(e => e.innerText && e.innerText.trim() === '❌ Fechar');
-        if (btnFechar && btnFechar.offsetHeight > 0) {
-            btnFechar.click(); bolhaEstadoFechado();
-        } else {
-            let dadosExtraidos = forcarPreenchimentoDOM(); 
-            let s = document.createElement('script');
-            s.src = 'https://syncmaster.lucassheiksk41.workers.dev?t=' + Date.now();
-            document.body.appendChild(s);
-            bolha.innerHTML = `❌`; bolha.style.background = `linear-gradient(135deg, #450a0a, #991b1b)`; bolha.style.borderColor = `#ff0055`;
-            injetarValoresNoModal(dadosExtraidos);
+    function status(msg, cor = '#10b981') {
+        let d = document.getElementById('omini-aviso');
+        if (!d) {
+            d = document.createElement('div');
+            d.id = 'omini-aviso';
+            d.style.cssText = `position:fixed; top:15px; right:15px; background:${cor}; color:white; padding:15px 25px; z-index:999999; font-weight:bold; border-radius:8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-size: 14px;`;
+            document.body.appendChild(d);
         }
-    };
+        d.style.background = cor;
+        d.innerText = "🤖 OMINI ESCRAVO: " + msg;
+    }
 
-    wrapper.appendChild(bolha);
-    document.body.appendChild(wrapper);
+    function getBotaoVisivel(textos, proibidos = []) {
+        let els = Array.from(document.querySelectorAll('button, a, input[type="button"], input[type="submit"], .btn')).filter(e => e.getBoundingClientRect().width > 0 && e.offsetHeight > 0);
+        for (let t of textos) {
+            let f = els.find(e => {
+                let txt = (e.innerText || e.value || e.textContent || '').toLowerCase();
+                if (!txt.includes(t.toLowerCase())) return false;
+                for (let p of proibidos) { if (txt.includes(p.toLowerCase())) return false; }
+                return true;
+            });
+            if (f) return f;
+        } return null;
+    }
+    
+    function setInputValue(element, value) {
+        if(!element) return;
+        element.focus(); let lastValue = element.value; element.value = value;
+        let event = new Event('input', { bubbles: true });
+        if (element._valueTracker) element._valueTracker.setValue(lastValue);
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        if(nativeInputValueSetter) nativeInputValueSetter.call(element, value);
+        element.dispatchEvent(event); element.dispatchEvent(new Event('change', { bubbles: true }));
+        element.blur();
+    }
+    
+    function getLixeiraAlvo() {
+        if (payload.apagar === '0' || payload.apagar === 0 || String(payload.apagar) === '0' || !payload.apagar) {
+            return null; 
+        }
 
-    // ==========================================
-    // ⚡ INJETOR BLINDADO: BOTÕES DA TABELA GERAL (RENOVAÇÃO EXPRESSA)
-    // ==========================================
-    function injetarBotoesNaTabela() {
-        const linhas = document.querySelectorAll('table tbody tr');
-        linhas.forEach(linha => {
-            const colunas = linha.querySelectorAll('td');
-            if(colunas.length < 6) return; 
+        let els = Array.from(document.querySelectorAll('button, a, input[type="button"], .btn, .text-danger, .fa-trash, .fe-trash')).filter(e => e.getBoundingClientRect().width > 0 && e.dataset.ignorar !== 'sim');
+        let matches = [];
+        for (let e of els) {
+            let txt = (e.innerText || e.value || e.textContent || '').toLowerCase(); let cls = String(e.className || '').toLowerCase();
+            if (txt.includes('delete') || txt.includes('apagar') || txt.includes('remover') || cls.includes('trash') || cls.includes('danger')) matches.push((e.tagName === 'I' || e.tagName === 'SPAN') ? (e.closest('button, a') || e) : e);
+        }
+        if (matches.length === 0) return null; matches = [...new Set(matches)];
 
-            const colunaAcoes = colunas[colunas.length - 1]; 
-            let username = colunas[1] ? colunas[1].innerText.trim().split('\n')[0].trim() : '';
+        let desNome1 = ""; try { desNome1 = atob(payload.nome1).toLowerCase(); } catch(e) { desNome1 = payload.nome1; }
+        let desNome2 = ""; try { desNome2 = atob(payload.nome2).toLowerCase(); } catch(e) { desNome2 = payload.nome2; }
 
-            if (colunaAcoes && username !== '' && !linha.querySelector('.btn-sync-inline')) {
-                const btnSync = document.createElement('button');
-                btnSync.className = 'btn-sync-inline';
-                btnSync.innerHTML = '🔄 Sync Master';
-                
-                btnSync.onclick = (e) => {
-                    e.preventDefault();
-                    btnSync.innerHTML = '⚡ Abrindo...';
-                    btnSync.style.background = '#f59e0b';
+        if (payload.apagar === '1') return matches[0];
 
-                    let comentarios = colunas[5] ? colunas[5].innerText.trim() : '';
-                    let spoofDiv = document.getElementById('omini-spoof-dom') || document.createElement('div');
-                    spoofDiv.id = 'omini-spoof-dom'; spoofDiv.style.display = 'none';
-                    
-                    // Injeta APENAS o usuário daquela linha, ignora o resto da tela!
-                    spoofDiv.innerHTML = `
-                        <input id="username" name="username" value="${username}">
-                        <input id="password" name="password" value="">
-                        <input id="expire_date" name="expire_date" value="">
-                        <textarea id="notes" name="notes">${comentarios}</textarea>
-                    `;
-                    if(!document.getElementById('omini-spoof-dom')) document.body.appendChild(spoofDiv);
-
-                    // Aciona o script principal SEM passar pelo scanner global
-                    let s = document.createElement('script');
-                    s.src = 'https://syncmaster.lucassheiksk41.workers.dev?t=' + Date.now();
-                    document.body.appendChild(s);
-                    
-                    bolha.innerHTML = `❌`; bolha.style.background = `linear-gradient(135deg, #450a0a, #991b1b)`; bolha.style.borderColor = `#ff0055`;
-                    
-                    // Força a injeção do utilizador na tabela limpa
-                    injetarValoresNoModal({ user: username, pass: "", dataExp: "", notesText: comentarios });
-
-                    setTimeout(() => { btnSync.innerHTML = '🔄 Sync Master'; btnSync.style.background = 'linear-gradient(135deg, #0284c7, #0ea5e9)'; }, 1500);
-                };
-                colunaAcoes.appendChild(btnSync);
+        for (let alvo of matches) {
+            let tr = alvo.closest('tr');
+            if (tr) {
+                let texto = tr.innerText.toLowerCase();
+                if (desNome1 && texto.includes(desNome1)) return alvo;
+                if (desNome2 && texto.includes(desNome2)) return alvo;
             }
+        } return null;
+    }
+
+    function fecharModaisDeFundo(ehFaxina) {
+        window.alert = () => true; window.confirm = () => true;
+        let seletores = ehFaxina 
+            ? 'button, a, span, i, .swal2-close, .swal2-confirm, .btn-confirm, .btn-close' 
+            : '.swal2-confirm, .swal-button--confirm'; 
+            
+        let fecharTudo = Array.from(document.querySelectorAll(seletores)).filter(e => {
+            let txt = (e.innerText || e.textContent || '').trim().toLowerCase();
+            let cls = String(e.className || '').toLowerCase();
+            if(!ehFaxina && (txt === 'ok' || txt === 'yes' || txt === 'sim')) return true;
+            if(ehFaxina && (['cancel', 'cancelar', 'close', 'fechar', 'x', '×', 'ok', 'yes', 'sim'].includes(txt) || cls.includes('close'))) return true;
+            return false;
+        });
+        fecharTudo.forEach(b => { try { b.click(); } catch(e){} });
+    }
+
+    function iniciarFaxina(callbackTerminou) {
+        let btnDelete = getLixeiraAlvo();
+        if (!btnDelete) {
+            setTimeout(() => { if (getLixeiraAlvo()) iniciarFaxina(callbackTerminou); else { status('Faxina: Pronta!'); callbackTerminou(); } }, 1000); return;
+        }
+        status('Apagando...');
+        window.confirm = () => true; try { btnDelete.scrollIntoView({block: 'center'}); } catch(e){}
+        btnDelete.click();
+        setTimeout(() => {
+            let confirmBtn = getBotaoVisivel(['ok', 'confirm', 'yes', 'sim']) || document.querySelector('.swal-button--confirm, .swal2-confirm, .btn-confirm');
+            if (confirmBtn) {
+                let p = confirmBtn.parentElement; let pinInput = null;
+                while (p && p.tagName !== 'BODY') {
+                    let inputs = Array.from(p.querySelectorAll('input')).filter(i => i.getBoundingClientRect().width > 0 && !['hidden', 'button', 'submit'].includes((i.type||'').toLowerCase()));
+                    if (inputs.length > 0) { pinInput = inputs[inputs.length - 1]; break; } p = p.parentElement;
+                }
+                if (pinInput) setInputValue(pinInput, '1306'); 
+                confirmBtn.click();
+                
+                setTimeout(() => {
+                    let btnAindaPreso = getBotaoVisivel(['ok', 'confirm', 'yes', 'sim']) || document.querySelector('.swal-button--confirm, .swal2-confirm, .btn-confirm');
+                    if (btnAindaPreso) {
+                        if (pinInput) setInputValue(pinInput, '130506'); btnAindaPreso.click();
+                        setTimeout(() => {
+                            let superPreso = getBotaoVisivel(['ok', 'confirm', 'yes', 'sim']) || document.querySelector('.swal-button--confirm, .swal2-confirm, .btn-confirm');
+                            if (superPreso) { btnDelete.dataset.ignorar = 'sim'; fecharModaisDeFundo(true); }
+                            setTimeout(() => { fecharModaisDeFundo(true); iniciarFaxina(callbackTerminou); }, 1000);
+                        }, 1500);
+                    } else { fecharModaisDeFundo(true); setTimeout(() => iniciarFaxina(callbackTerminou), 1500); }
+                }, 1500);
+            } else { fecharModaisDeFundo(true); setTimeout(() => iniciarFaxina(callbackTerminou), 1500); }
+        }, 1000);
+    }
+
+    function executarFormulario(nomeServidor, urlServidor, callbackSucesso) {
+        let btnSubmit = getBotaoVisivel(['submit', 'save', 'salvar']);
+        
+        if (!btnSubmit) {
+            let btnAdd = getBotaoVisivel(['add playlist', 'adicionar playlist'], ['xc']); 
+            if(btnAdd) { btnAdd.click(); }
+            setTimeout(() => executarFormulario(nomeServidor, urlServidor, callbackSucesso), 1500);
+            return;
+        } 
+        
+        let allVisibleInputs = Array.from(document.querySelectorAll('input')).filter(i => { 
+            let t = (i.type || '').toLowerCase(); 
+            return (!['hidden', 'checkbox', 'radio', 'submit', 'button'].includes(t) && i.getBoundingClientRect().width > 0); 
+        });
+
+        if (allVisibleInputs.length < 2) {
+            setTimeout(() => executarFormulario(nomeServidor, urlServidor, callbackSucesso), 1000);
+            return;
+        }
+
+        let nomeInput = allVisibleInputs.find(i => i.placeholder && i.placeholder.toLowerCase().includes('name')) || allVisibleInputs[0];
+        let urlInput = allVisibleInputs.find(i => i.placeholder && i.placeholder.toLowerCase().includes('.m3u')) || allVisibleInputs[1];
+
+        setInputValue(nomeInput, nomeServidor);
+        setInputValue(urlInput, urlServidor);
+
+        let checkbox = document.querySelector('input[type="checkbox"]'); 
+        if (checkbox && !checkbox.checked) checkbox.click();
+        
+        setTimeout(() => {
+            let inputsFinais = Array.from(document.querySelectorAll('input')).filter(i => { let t = (i.type || '').toLowerCase(); return (!['hidden', 'checkbox', 'radio', 'submit', 'button'].includes(t) && i.getBoundingClientRect().width > 0); });
+            let emptyInputs = inputsFinais.filter(i => !i.value);
+            if (emptyInputs.length >= 2) { setInputValue(emptyInputs[0], '1306'); setInputValue(emptyInputs[1], '1306'); }
+            
+            setTimeout(() => { 
+                btnSubmit.click(); 
+                
+                setTimeout(() => {
+                    let okBtns = Array.from(document.querySelectorAll('button')).filter(b => b.getBoundingClientRect().width > 0 && (b.innerText || '').trim().toLowerCase() === 'ok');
+                    okBtns.forEach(b => { try { b.click(); } catch(e){} });
+                    
+                    setTimeout(() => {
+                        let btnCloseModal = document.querySelector('.modal.show [data-bs-dismiss="modal"], .modal.show .btn-close, .modal.show button.close');
+                        if (btnCloseModal) {
+                            try { btnCloseModal.click(); } catch(e){}
+                        } else {
+                            let xBtn = Array.from(document.querySelectorAll('.modal-header button, .modal-title + button')).find(b => b.getBoundingClientRect().width > 0);
+                            if (xBtn) try { xBtn.click(); } catch(e){}
+                        }
+                        
+                        setTimeout(callbackSucesso, 1000);
+                    }, 1000);
+                }, 1500);
+            }, 1000);
+        }, 1000);
+    }
+
+    function rodarMotor() {
+        const url = window.location.href;
+
+        if (!url.includes('/login') && payload.etapa === 'LOGIN') {
+            status('Limpando sessão presa...');
+            try { window.localStorage.clear(); document.cookie.split(';').forEach(c => document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/')); } catch(e) {}
+            let btnLogout = getBotaoVisivel(['logout', 'sair']) || document.querySelector('a[href*="logout"]');
+            if (btnLogout) btnLogout.click(); else window.location.href = 'https://iboproapp.com/manage-playlists/login/';
+            return;
+        }
+
+        if (url.includes('/login') && payload.etapa === 'LOGIN') {
+            let allInputs = Array.from(document.querySelectorAll('input')).filter(i => !['hidden', 'checkbox', 'radio', 'submit', 'button'].includes((i.type || '').toLowerCase()));
+            if(allInputs.length >= 2) {
+                status('Fazendo Login...');
+                setInputValue(allInputs[0], payload.mac); setInputValue(allInputs[1], payload.key);
+                setTimeout(() => {
+                    let btnLogin = document.querySelector('button[type="submit"]') || getBotaoVisivel(['login', 'submit']);
+                    if(btnLogin) { 
+                        payload.etapa = 'PAINEL'; 
+                        sessionStorage.setItem('omini_payload', JSON.stringify(payload)); 
+                        sessionStorage.setItem('omini_login_failsafe', '0'); 
+                        btnLogin.removeAttribute('disabled'); 
+                        btnLogin.click(); 
+                    }
+                }, 1000);
+            }
+        }
+        
+        else if (url.includes('/login') && payload.etapa === 'PAINEL') {
+            let tent = parseInt(sessionStorage.getItem('omini_login_failsafe') || '0') + 1;
+            sessionStorage.setItem('omini_login_failsafe', tent.toString());
+            
+            if (tent > 5) {
+                status('❌ Erro de Login (MAC Inválido). Abortando...', '#ef4444');
+                setTimeout(() => {
+                    sessionStorage.removeItem('omini_payload');
+                    sessionStorage.removeItem('omini_login_failsafe');
+                    window.location.href = '/escravo'; 
+                }, 3000);
+            } else {
+                status('Aguardando entrada... (' + tent + '/5)', '#f59e0b');
+            }
+        }
+
+        else if (!url.includes('/login') && payload.etapa === 'PAINEL') {
+            status('Painel Aberto! Carregando injeções...');
+            payload.etapa = 'EXECUTANDO'; sessionStorage.setItem('omini_payload', JSON.stringify(payload));
+            let tentativas = 0;
+            let verificador = setInterval(() => {
+                tentativas++; let temTabela = document.querySelector('table tbody tr'); let temAddBtn = getBotaoVisivel(['add playlist', 'adicionar playlist', 'add'], ['xc']);
+                if (temTabela || temAddBtn || tentativas > 20) {
+                    clearInterval(verificador);
+                    iniciarFaxina(() => {
+
+                        let dns1_dec = ""; let nome1_dec = ""; let fmt1_dec = "ts";
+                        try { dns1_dec = atob(payload.dns1); nome1_dec = atob(payload.nome1); if (payload.fmt1) fmt1_dec = atob(payload.fmt1); } catch(e) { dns1_dec = payload.dns1; nome1_dec = payload.nome1; if (payload.fmt1) fmt1_dec = payload.fmt1; }
+
+                        let m3u1 = `${dns1_dec.endsWith('/') ? dns1_dec.slice(0, -1) : dns1_dec}/get.php?username=${payload.user}&password=${payload.pass}&type=m3u_plus&output=${fmt1_dec}`;
+
+                        executarFormulario(nome1_dec, m3u1, () => {
+                            if (payload.dns2) {
+                                let dns2_dec = ""; let nome2_dec = ""; let fmt2_dec = "ts";
+                                try { dns2_dec = atob(payload.dns2); nome2_dec = atob(payload.nome2); if (payload.fmt2) fmt2_dec = atob(payload.fmt2); } catch(e) { dns2_dec = payload.dns2; nome2_dec = payload.nome2; if (payload.fmt2) fmt2_dec = payload.fmt2; }
+
+                                let m3u2 = `${dns2_dec.endsWith('/') ? dns2_dec.slice(0, -1) : dns2_dec}/get.php?username=${payload.user}&password=${payload.pass}&type=m3u_plus&output=${fmt2_dec}`;
+                                executarFormulario(nome2_dec, m3u2, finalizar);
+                            } else finalizar();
+                        });
+                    });
+                }
+            }, 500);
+        }
+    }
+
+    function finalizar() {
+        status('✅ FINALIZADO! Retornando...', '#10b981');
+        fetch(`${WORKER_URL}/complete-fila`, { method: 'POST', body: JSON.stringify({mac: payload.mac}) })
+        .catch(() => { console.log("Erro de rede ignorado na finalização."); })
+        .finally(() => {
+            sessionStorage.removeItem('omini_payload');
+            sessionStorage.removeItem('omini_login_failsafe');
+            
+            let btnLogout = getBotaoVisivel(['logout', 'sair']) || document.querySelector('a[href*="logout"]');
+            if (btnLogout) btnLogout.click();
+            
+            // 🔥 REVERTIDO PARA A ESTEIRA RÁPIDA QUE ESTAVA BOA: 1.5 Segundos!
+            setTimeout(() => window.location.href = '/escravo', 1500);
         });
     }
 
-    // ==========================================
-    // 🛡️ CÃO DE GUARDA DO MODAL
-    // ==========================================
     setInterval(() => {
-        injetarBotoesNaTabela();
-        let btnFechar = Array.from(document.querySelectorAll('*')).find(e => e.innerText && e.innerText.trim() === '❌ Fechar');
-        if (btnFechar) {
-            let card = btnFechar.parentElement;
-            while(card && card.tagName === 'DIV') {
-                let bg = window.getComputedStyle(card).backgroundColor;
-                if (bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') break;
-                card = card.parentElement;
-            }
-            if (card && !card.dataset.ominiFormatado) {
-                card.dataset.ominiFormatado = "sim"; card.id = "omini-sync-card-premium";
-                card.style.position = 'fixed'; card.style.top = '130px'; card.style.right = '75px'; card.style.zIndex = '2147483646';
-                btnFechar.addEventListener('click', bolhaEstadoFechado);
-            }
-        }
-    }, 500);
+        const atual = JSON.parse(sessionStorage.getItem('omini_payload'));
+        if (atual && (atual.etapa === 'LOGIN' || atual.etapa === 'PAINEL')) rodarMotor();
+    }, 2000);
+
 })();
