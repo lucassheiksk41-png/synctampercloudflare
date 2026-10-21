@@ -1,225 +1,93 @@
+
+
+Tampermonkey® by Jan Biniok
+v5.5.1
+	
+SYNC MASTER - OPERA PLAYER (Sniper Nativo)
+by Comandante & Omini
+
+1
 // ==UserScript==
-// @name         SYNC MASTER - CLASSIC (Interface Visual)
+2
+// @name         SYNC MASTER - OPERA PLAYER (Sniper Nativo)
+3
 // @namespace    http://tampermonkey.net/
-// @version      6.1
-// @description  Botão que abre a janela de controlo total para o MasterX (Nome Completo)
+4
+// @version      4.0
+5
+// @description  Bolha M Neon + Botão Sync na Tabela (Operação Relâmpago)
+6
 // @author       Comandante & Omini
-// @match        *://*.painelclass.com/*
-// @grant        GM_xmlhttpRequest
-// @connect      *
+7
+// @match        *://office.operak.top/*
+8
+// @match        *://*.operak.top/*
+9
+// @match        *://*.operaplayer.com/*
+10
+// @match        *://operaplayer.com/*
+11
+// @grant        none
+12
 // ==/UserScript==
-
+13
+​
+14
 (function() {
+15
     'use strict';
+16
+​
+17
+    // ⚠️ O SEU WORKER DO OPERA MANTIDO INTACTO:
+18
+    const LINK_WORKER_OPERA = 'https://syncoperamaster.lucassheiksk41.workers.dev';
+19
+​
+20
+    console.log("🔮 ROCKET SYNC: Script Opera (v4.0 - Sniper Nativo + Bolha) ativado...");
+21
+​
+22
+    // ==============================================================
+23
+    // 1. O MOTOR DE EXTRAÇÃO ORIGINAL (Usado se abrir o cliente)
+24
+    // ==============================================================
+25
+    function extrairDadosDaPagina() {
+26
+        let txt = document.body.innerText;
+27
+        function extrair(r){ let m = txt.match(r); return m ? m[1].trim() : ''; }
+28
+​
+29
+        let usuario = ''; let senha = ''; let expiracaoRaw = '';
+30
+        let comentario = ''; let expFormatada = '';
+31
+​
+32
+        let allInputs = Array.from(document.querySelectorAll('input'));
+33
+​
+34
+        let camposPreenchidos = allInputs.filter(i =>
+35
+            i.type !== 'hidden' && i.type !== 'button' && i.type !== 'checkbox' && i.type !== 'search' &&
+36
+            i.value && i.value.trim().length >= 2 &&
+37
+            (!i.placeholder || !i.placeholder.toLowerCase().includes('pesquisa')) &&
+38
+            !i.value.toLowerCase().includes('concordo') &&
+39
+            !i.value.toLowerCase().includes('cancelar')
+40
+        );
+Tam - Seu bot de serviço
 
-    console.log("🟪 SYNC MASTER CLASSIC: Interface Visual Armada (v6.1 - Radar Corrigido)...");
-
-    const WORKER_URL = "https://syncclassicmaster.lucassheiksk41.workers.dev";
-
-    // ==========================================
-    // 🎨 ESTILOS DA TELA
-    // ==========================================
-    const estilos = document.createElement('style');
-    estilos.innerHTML = `
-        .btn-sync-master {
-            background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: none;
-            padding: 5px 10px; border-radius: 6px; font-weight: 700; cursor: pointer;
-            font-size: 11px; margin-left: 8px; margin-top: 4px; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
-            transition: all 0.2s; display: inline-block;
-        }
-        .btn-sync-master:hover { transform: scale(1.05); filter: brightness(1.2); }
-
-        #om-backdrop {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-            z-index: 2147483646; display: none; justify-content: center; align-items: center;
-        }
-
-        #om-modal {
-            background: #0f172a; border: 1px solid #8b5cf6; border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px rgba(139, 92, 246, 0.3);
-            width: 320px; padding: 20px; font-family: 'Segoe UI', sans-serif; color: #f8fafc;
-            display: flex; flex-direction: column; gap: 12px;
-        }
-
-        #om-modal h3 { margin: 0; text-align: center; color: #fff; font-size: 18px; text-shadow: 0 0 8px #a78bfa; }
-        #om-modal p.alvo { margin: -8px 0 10px 0; text-align: center; font-size: 10px; color: #94a3b8; letter-spacing: 1px; font-weight: bold; }
-
-        .om-row { display: flex; gap: 10px; }
-        .om-col { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-        .om-col label { font-size: 11px; color: #cbd5e1; font-weight: 600; }
-
-        #om-modal input, #om-modal textarea {
-            background: #020617; color: #c4b5fd; border: 1px solid #6d28d9; border-radius: 6px;
-            padding: 8px; font-size: 12px; outline: none; transition: 0.2s; width: 100%; box-sizing: border-box;
-        }
-        #om-modal input:focus, #om-modal textarea:focus { border-color: #a78bfa; box-shadow: 0 0 8px rgba(167, 139, 250, 0.3); }
-        #om-modal textarea { resize: none; height: 50px; }
-
-        .om-grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; }
-        .om-btn-acao {
-            background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white; border: 1px solid #8b5cf6;
-            padding: 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(91, 33, 182, 0.5); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-        .om-btn-acao:hover { filter: brightness(1.2); transform: translateY(-2px); }
-
-        #om-fechar {
-            background: #1e293b; color: #ef4444; border: 1px solid #ef4444; margin-top: 5px;
-            padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;
-        }
-        #om-fechar:hover { background: #ef4444; color: #fff; }
-
-        #om-status { text-align: center; font-size: 12px; font-weight: bold; min-height: 16px; margin-top: 5px; }
-    `;
-    document.head.appendChild(estilos);
-
-    // ==========================================
-    // 🧱 CONSTRUÇÃO DA TELA (DOM)
-    // ==========================================
-    const backdrop = document.createElement('div');
-    backdrop.id = 'om-backdrop';
-    backdrop.innerHTML = `
-        <div id="om-modal">
-            <h3>⚡ Sync -> MasterX</h3>
-            <p class="alvo">ALVO: PAINEL CLASSIC</p>
-
-            <div class="om-row">
-                <div class="om-col"><label>Usuário:</label><input id="om-user"></div>
-                <div class="om-col"><label>Senha:</label><input id="om-pass"></div>
-            </div>
-
-            <div class="om-col">
-                <label>Expiração Correta (+1 p/ Anular Fuso):</label>
-                <input id="om-exp">
-            </div>
-
-            <div class="om-col">
-                <label>Nome Completo / Notas:</label>
-                <textarea id="om-notas"></textarea>
-            </div>
-
-            <div id="om-status"></div>
-
-            <div class="om-grid-botoes">
-                <button class="om-btn-acao" id="btn-criar">✨ CRIAR</button>
-                <button class="om-btn-acao" id="btn-renovar">💵 RENOVAR</button>
-                <button class="om-btn-acao" id="btn-editar">🖍️ EDITAR</button>
-                <button class="om-btn-acao" id="btn-apagar">🗑️ APAGAR</button>
-            </div>
-
-            <button id="om-fechar">❌ Fechar</button>
-        </div>
-    `;
-    document.body.appendChild(backdrop);
-
-    // ==========================================
-    // ⚙️ LÓGICA DE INJEÇÃO NA TABELA
-    // ==========================================
-    function injetarBotoesSync() {
-        try {
-            let linhas = document.querySelectorAll('table tbody tr');
-
-            linhas.forEach(linha => {
-                if (linha.querySelector('.btn-sync-master')) return;
-
-                let colunas = linha.querySelectorAll('td');
-                // Trava de segurança reduzida: se tiver pelo menos 6 colunas, já sabemos que é cliente
-                if (colunas.length < 6) return;
-
-                // Vai SEMPRE para a última coluna da tabela (Ações), não importa quantas a tabela tenha
-                let tdAcoes = colunas[colunas.length - 1];
-
-                let btnSync = document.createElement('button');
-                btnSync.innerText = '🔄 Sync Master';
-                btnSync.className = 'btn-sync-master';
-
-                btnSync.onclick = function(e) {
-                    e.preventDefault(); e.stopPropagation();
-                    abrirPainelVisual(colunas);
-                };
-
-                tdAcoes.appendChild(btnSync);
-            });
-        } catch(e) {
-            console.log("Cão de guarda silencioso...");
-        }
-    }
-
-    // ==========================================
-    // 🖥️ LÓGICA DE ABERTURA E ENVIO
-    // ==========================================
-    function abrirPainelVisual(colunas) {
-        // Extração blindada: Mesmo que falte uma coluna visualmente, o script não encrava
-        let nomeCompleto = colunas[1] ? (colunas[1].innerText || "").replace(/\s+/g, ' ').trim() : "";
-        let usuario = colunas[3] ? (colunas[3].innerText || "").trim() : "";
-        let senha = colunas[4] ? (colunas[4].innerText || "").trim() : "";
-        let expiracao = colunas[7] ? (colunas[7].innerText || "").replace(/\n/g, ' ').trim() : "";
-
-        // Preenche a tela
-        document.getElementById('om-user').value = usuario;
-        document.getElementById('om-pass').value = senha;
-        document.getElementById('om-exp').value = expiracao;
-        document.getElementById('om-notas').value = nomeCompleto;
-        document.getElementById('om-status').innerText = "";
-
-        // Mostra a tela
-        backdrop.style.display = 'flex';
-    }
-
-    // Função de Disparo
-    function acionarWorker(acaoStr) {
-        const statusDiv = document.getElementById('om-status');
-        const botoes = document.querySelectorAll('.om-btn-acao');
-
-        statusDiv.style.color = '#f59e0b';
-        statusDiv.innerText = `⏳ A Executar: ${acaoStr.toUpperCase()}...`;
-        botoes.forEach(b => b.disabled = true);
-
-        let payload = {
-            acao: acaoStr,
-            usuario_cliente: document.getElementById('om-user').value,
-            senha_cliente: document.getElementById('om-pass').value,
-            data_expiracao: document.getElementById('om-exp').value,
-            novo_nome: document.getElementById('om-notas').value
-        };
-
-        GM_xmlhttpRequest({
-            method: "POST",
-            url: WORKER_URL,
-            headers: { "Content-Type": "application/json" },
-            data: JSON.stringify(payload),
-            onload: function(response) {
-                try {
-                    let res = JSON.parse(response.responseText);
-                    if (res.status === "sucesso") {
-                        statusDiv.style.color = '#10b981'; // Verde
-                        statusDiv.innerText = res.msg;
-                    } else {
-                        statusDiv.style.color = '#ef4444'; // Vermelho
-                        statusDiv.innerText = res.msg;
-                    }
-                } catch(e) {
-                    statusDiv.style.color = '#ef4444';
-                    statusDiv.innerText = "❌ Erro ao ler resposta do Worker.";
-                }
-                botoes.forEach(b => b.disabled = false);
-            },
-            onerror: function() {
-                statusDiv.style.color = '#ef4444';
-                statusDiv.innerText = "❌ Falha de Ligação com a Cloudflare.";
-                botoes.forEach(b => b.disabled = false);
-            }
-        });
-    }
-
-    // Mapeamento dos Botões da Tela
-    document.getElementById('btn-criar').onclick = () => acionarWorker('criar');
-    document.getElementById('btn-renovar').onclick = () => acionarWorker('renovar');
-    document.getElementById('btn-editar').onclick = () => acionarWorker('editar');
-    document.getElementById('btn-apagar').onclick = () => acionarWorker('deletar');
-    document.getElementById('om-fechar').onclick = () => backdrop.style.display = 'none';
-
-    // Cão de Guarda rápido
-    setInterval(injetarBotoesSync, 1000);
-})();
+Você precisa de ajuda para visualizar e editar valores armazenados por um userscript?
+Desativar
+Tampermonkey Bot
