@@ -1,212 +1,226 @@
 // ==UserScript==
-// @name         SYNC MASTER - CLOUD
+// @name         OMINI AUTO-VISOR (Bob e Ibo Player)
 // @namespace    http://tampermonkey.net/
-// @version      1.2
-// @description  Botão Sniper Integrado + Bolha M Neon (Alvo grothx)
+// @version      2.8
+// @description  Busca Inteligente + Bypass React Nativo + Sync GitHub!
 // @author       Você & Omini
-// @match        *://*.grothx.net/*
-// @match        *://a.grothx.net/*
+// @match        *://*.bobplayer.com/*
+// @match        *://bobplayer.com/*
+// @match        *://*.iboplayer.com/*
+// @match        *://iboplayer.com/*
+// @updateURL    https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/autovisor_injector.user.js
+// @downloadURL  https://raw.githubusercontent.com/lucassheiksk41-png/synctampercloudflare/main/autovisor_injector.user.js
+// @run-at       document-end
 // @grant        GM_xmlhttpRequest
+// @connect      api.2captcha.com
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    // ⚠️ COLOQUE O LINK DO SEU NOVO WORKER DA CLOUD DENTRO DAS ASPAS ABAIXO:
-    const LINK_WORKER_CLOUD = 'https://synccloudmaster.lucassheiksk41.workers.dev';
+    console.log("👀 OMINI VISOR: Aba detectada (v2.8 - Bypass React & Sync GitHub)!");
 
-    console.log("🔮 ROCKET SYNC: Script Cloud (v1.2) - Alvo grothx.net travado...");
+    const API_2CAPTCHA = "69b731c3b84946f4171a68ea93713871";
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('omini_verify') === '1') sessionStorage.setItem('omini_visor_ativo', 'true');
+    if (sessionStorage.getItem('omini_visor_ativo') !== 'true') return;
 
-    // ==============================================================
-    // 1. CONSTRUÇÃO DA INTERFACE & ENVIO BLINDADO
-    // ==============================================================
-    function abrirJanelaSync(dados) {
-        if(document.getElementById('masterx-sync-overlay')) return;
+    // =========================================================================
+    // Digitação Robótica Feroz (Bypass Nativo React Nível Máximo)
+    // =========================================================================
+    function typeLikeHuman(el, text) {
+        if (!el) return;
+        el.focus();
+        
+        const valueSetter = Object.getOwnPropertyDescriptor(el, 'value')?.set;
+        const prototype = Object.getPrototypeOf(el);
+        const prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
 
-        const o = document.createElement('div');
-        o.id = 'masterx-sync-overlay';
-        o.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:2147483647;display:flex;justify-content:center;align-items:center;';
-
-        const m = document.createElement('div');
-        m.style.cssText = 'background:#222;padding:25px;border-radius:15px;width:340px;box-shadow:0 10px 30px rgba(0,0,0,0.5);font-family:sans-serif;color:#fff;text-align:center;border: 1px solid #00f6ff;';
-
-        m.innerHTML = `
-          <h2 style="margin-top:0;color:#00f6ff;">⚡ Sync -> Cloud</h2>
-          <div style="color:#ffeb3b;font-size:12px;margin-bottom:15px;">Alvo: <b>CLOUD</b></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;text-align:left;">
-            <div>
-              <label style="font-size:12px;color:#aaa;">Usuário:</label>
-              <input id="mx-user" type="text" value="${dados.usuario}" style="width:100%;padding:8px;margin-top:2px;border-radius:8px;border:none;background:#333;color:#fff;font-size:14px;">
-            </div>
-            <div>
-              <label style="font-size:12px;color:#aaa;">Senha:</label>
-              <input id="mx-senha" type="text" value="${dados.senha}" style="width:100%;padding:8px;margin-top:2px;border-radius:8px;border:none;background:#333;color:#fff;font-size:14px;">
-            </div>
-          </div>
-          <div style="text-align:left;margin-bottom:15px;">
-            <label style="font-size:12px;color:#aaa;">Expiração Correta (+1 p/ Anular Fuso):</label>
-            <input id="mx-exp" type="text" value="${dados.expFormatada}" style="width:100%;padding:10px;margin-top:5px;border-radius:8px;border:none;background:#333;color:#fff;font-size:16px;">
-          </div>
-          <div style="text-align:left;margin-bottom:20px;">
-            <label style="font-size:12px;color:#aaa;">Nome/Device:</label>
-            <input id="mx-nome" type="text" value="${dados.comentario.replace(/\n/g, ' ')}" style="width:100%;padding:10px;margin-top:5px;border-radius:8px;border:none;background:#333;color:#fff;font-size:16px;">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-            <button id="mx-btn-criar" style="padding:12px;border:none;border-radius:8px;background:#00ff88;color:#000;font-weight:bold;cursor:pointer;">➕ CRIAR</button>
-            <button id="mx-btn-renovar" style="padding:12px;border:none;border-radius:8px;background:#2962ff;color:#fff;font-weight:bold;cursor:pointer;">🔄 RENOVAR</button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
-            <button id="mx-btn-editar" style="padding:12px;border:none;border-radius:8px;background:#ff8c00;color:#fff;font-weight:bold;cursor:pointer;">✏️ EDITAR</button>
-            <button id="mx-btn-deletar" style="padding:12px;border:none;border-radius:8px;background:#d32f2f;color:#fff;font-weight:bold;cursor:pointer;">🗑️ APAGAR</button>
-          </div>
-          <button id="mx-btn-fechar" style="width:100%;padding:12px;border:1px solid #555;border-radius:8px;background:transparent;color:#aaa;cursor:pointer;">❌ Fechar</button>
-          <div id="mx-status" style="margin-top:15px;font-size:14px;font-weight:bold;"></div>
-        `;
-
-        o.appendChild(m); document.body.appendChild(o);
-        document.getElementById('mx-btn-fechar').onclick = () => o.remove();
-
-        function acaoMasterX(t) {
-            const s = document.getElementById('mx-status');
-            s.innerHTML = '⏳ Processando...'; s.style.color = '#ffeb3b';
-
-            if (LINK_WORKER_CLOUD.includes("COLOQUE_SEU_LINK_AQUI")) {
-                s.innerHTML = '❌ ERRO: Coloque o Link do Worker na Linha 18!';
-                s.style.color = '#ff4444';
-                return;
-            }
-
-            const p = {
-                acao: t,
-                usuario_cliente: document.getElementById('mx-user').value,
-                novo_nome: document.getElementById('mx-nome').value,
-                senha_cliente: document.getElementById('mx-senha').value,
-                data_expiracao: document.getElementById('mx-exp').value
-            };
-
-            GM_xmlhttpRequest({
-                method: "POST",
-                url: LINK_WORKER_CLOUD,
-                headers: { "Content-Type": "application/json" },
-                data: JSON.stringify(p),
-                onload: function(response) {
-                    try {
-                        let d = JSON.parse(response.responseText);
-                        s.innerHTML = d.msg;
-                        s.style.color = d.status === 'sucesso' ? '#00ff88' : '#ff4444';
-                    } catch(e) {
-                        s.innerHTML = '❌ O Worker do Cloudflare retornou um erro interno.';
-                        s.style.color = '#ff4444';
-                    }
-                },
-                onerror: function(error) {
-                    s.innerHTML = '❌ Conexão Bloqueada. Verifique o Link do Worker.';
-                    s.style.color = '#ff4444';
-                }
-            });
+        if (valueSetter && valueSetter !== prototypeValueSetter) {
+            prototypeValueSetter.call(el, text);
+        } else if (prototypeValueSetter) {
+            prototypeValueSetter.call(el, text);
+        } else {
+            el.value = text;
         }
-
-        document.getElementById('mx-btn-criar').onclick = () => acaoMasterX('criar');
-        document.getElementById('mx-btn-renovar').onclick = () => acaoMasterX('renovar');
-        document.getElementById('mx-btn-editar').onclick = () => acaoMasterX('editar');
-        document.getElementById('mx-btn-deletar').onclick = () => acaoMasterX('deletar');
+        
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur();
     }
 
-    // ==============================================================
-    // 2. INJEÇÃO DOS BOTÕES "SNIPER" NA TABELA
-    // ==============================================================
-    function injetarBotoesSniper() {
-        // Encontra todas as linhas de clientes (tr) dentro da tabela
-        let linhas = document.querySelectorAll('tr');
+    // A MIRA LASER INTELIGENTE: Pega o SVG mais complexo da tela (ignora a setinha de refresh!)
+    function encontrarCaptchaExato() {
+        let svgs = Array.from(document.querySelectorAll('svg'));
+        // Ignora logotipos no topo da página
+        svgs = svgs.filter(s => s.getBoundingClientRect().top > 50);
+        if (svgs.length === 0) return null;
 
-        linhas.forEach(linha => {
-            let celulas = linha.querySelectorAll('td');
-            if(celulas.length >= 9 && !linha.querySelector('.btn-sniper-sync')) {
+        // O Captcha verdadeiro é o desenho com mais "paths" (linhas/curvas) dentro dele.
+        // Ícones de refresh ou botões têm 1 ou 2 paths. O Captcha tem dezenas.
+        svgs.sort((a, b) => b.querySelectorAll('path').length - a.querySelectorAll('path').length);
 
-                let colunaAcoes = celulas[celulas.length - 1];
+        return svgs[0];
+    }
 
-                let btn = document.createElement('button');
-                btn.className = 'btn-sniper-sync';
-                btn.innerHTML = '⚡ Sync';
-                btn.style.cssText = 'background: linear-gradient(135deg, #020617, #1e3a8a); color:#00f6ff; border:1px solid #00f6ff; padding:4px 8px; border-radius:4px; margin-left:5px; cursor:pointer; font-weight:bold; font-size:11px; box-shadow: 0 0 5px rgba(0, 246, 255, 0.4);';
+    function iniciarVisor() {
+        if (!document.body) { setTimeout(iniciarVisor, 200); return; }
 
-                btn.onclick = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+        if (window.location.href.includes('/login') || document.querySelector('input[name*="mac" i], input[type="text"]')) {
+            let mac = urlParams.get('mac') || sessionStorage.getItem('omini_mac');
+            let key = urlParams.get('key') || sessionStorage.getItem('omini_key');
 
-                    let usuario = celulas[1].textContent.trim();
-                    let senha = celulas[2].textContent.trim();
-                    let vencimentoRaw = celulas[4].textContent.trim();
-                    let comentario = celulas[7].textContent.trim() || 'Cloud Player';
+            if (mac) {
+                sessionStorage.setItem('omini_mac', mac); sessionStorage.setItem('omini_key', key);
 
-                    let expFormatada = '';
-                    if (vencimentoRaw) {
-                        let match = vencimentoRaw.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-                        if (match) {
-                            let dia = match[1];
-                            let mes = match[2];
-                            let ano = match[3];
-                            let d = new Date(ano, parseInt(mes)-1, parseInt(dia) + 1);
-                            expFormatada = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+                let overlay = document.createElement('div');
+                overlay.id = "omini-overlay-visor";
+                overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#00f6ff; font-family:sans-serif; text-align:center; backdrop-filter: blur(3px);";
+                overlay.innerHTML = `<div style="font-size: 50px; margin-bottom: 20px;">👀</div><div style="font-size: 24px; font-weight: bold; color: #f97316;">VISOR ATIVADO</div><div id="visor-status" style="font-size: 16px; margin-top: 10px; color: #94a3b8;">Focando no Captcha Real e enviando à Índia...</div>`;
+                document.body.appendChild(overlay);
+
+                setTimeout(async () => {
+                    let acceptBtn = Array.from(document.querySelectorAll('button, a')).find(b => b.innerText && b.innerText.toUpperCase().includes('ACCEPT'));
+                    if (acceptBtn) acceptBtn.click();
+
+                    let svg = encontrarCaptchaExato();
+
+                    if (svg) {
+                        // PREPARAÇÃO PARA FICAR IGUAL AO INJETOR NUVEM:
+                        let clone = svg.cloneNode(true);
+                        clone.removeAttribute('width');   // Limpa a largura para não bugar
+                        clone.removeAttribute('height');  // Limpa a altura para não bugar
+                        clone.removeAttribute('style');   // Limpa CSS da tela
+
+                        let base64 = await svgToBase64(clone.outerHTML);
+                        document.getElementById('visor-status').innerHTML = "<b style='color:#f97316;'>Buscando senha (Corrida de 5 Indianos)... ⏳</b>";
+
+                        let senha = await solveCaptchaQuintuplo(base64, API_2CAPTCHA);
+
+                        if (senha) {
+                            document.getElementById('visor-status').innerHTML = `<span style="color:#10b981; font-weight:bold;">Senha [${senha}] recebida! Injetando tudo na velocidade da luz... 🚀</span>`;
+
+                            let inputs = Array.from(document.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"])'));
+                            let mInp = inputs.find(i => (i.name||"").toLowerCase().includes('mac') || (i.placeholder||"").toLowerCase().includes('mac')) || inputs[0];
+                            let kInp = inputs.find(i => (i.name||"").toLowerCase().includes('key') || (i.name||"").toLowerCase().includes('device') || (i.placeholder||"").toLowerCase().includes('key')) || inputs[1];
+                            let cInp = inputs.find(i => (i.name||"").toLowerCase().includes('captcha') || (i.placeholder||"").toLowerCase().includes('captcha')) || inputs[2];
+
+                            typeLikeHuman(mInp, mac);
+                            typeLikeHuman(kInp, key);
+                            typeLikeHuman(cInp, senha);
+
+                            setTimeout(() => {
+                                let loginBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText && b.innerText.toUpperCase().includes('LOGIN')) || document.querySelector('button[type="submit"]');
+                                if(loginBtn) {
+                                    loginBtn.disabled = false; // Força ativação caso o React teime
+                                    loginBtn.click();
+                                }
+
+                                setTimeout(() => { if(document.getElementById("omini-overlay-visor")) document.getElementById("omini-overlay-visor").remove(); }, 1500);
+                            }, 400);
+                        } else {
+                            document.getElementById('visor-status').innerHTML = "<span style='color:#ef4444;'>❌ Imagem ilegível ou respostas falsas. Pressione F5 para tentar novamente!</span>";
                         }
+                    } else {
+                        document.getElementById('visor-status').innerHTML = "<span style='color:#ef4444;'>❌ Captcha não encontrado na tela.</span>";
+                        setTimeout(() => { if(document.getElementById("omini-overlay-visor")) document.getElementById("omini-overlay-visor").remove(); }, 3000);
                     }
-
-                    abrirJanelaSync({usuario, senha, expFormatada, comentario});
-                };
-
-                let divAcoes = colunaAcoes.querySelector('div') || colunaAcoes;
-                divAcoes.appendChild(btn);
+                }, 800);
             }
+        } else {
+            // TELA DO PAINEL LOGADO
+            setTimeout(() => {
+                const btnFechar = document.createElement('button');
+                btnFechar.innerHTML = `✅ ESTÁ TUDO CERTO! (Fechar Aba)`;
+                btnFechar.style.cssText = `position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #059669, #10b981); color: white; border: 2px solid #34d399; border-radius: 12px; padding: 15px 30px; font-size: 18px; font-weight: 900; cursor: pointer; z-index: 9999999; box-shadow: 0 10px 25px rgba(0,0,0,0.9); text-transform: uppercase; font-family: 'Arial Black', sans-serif; transition: 0.2s;`;
+                btnFechar.onclick = () => { sessionStorage.removeItem('omini_visor_ativo'); window.close(); };
+                document.body.appendChild(btnFechar);
+            }, 1500);
+        }
+    }
+
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', iniciarVisor); } else { iniciarVisor(); }
+
+    // ==========================================
+    // CLONE ABSOLUTO DO INJETOR NUVEM (v5.5)
+    // ==========================================
+    function svgToBase64(svgString) {
+        return new Promise((resolve) => {
+            try {
+                const div = document.createElement('div'); div.innerHTML = svgString.trim(); const svg = div.querySelector('svg');
+                if (!svg.getAttribute('xmlns')) svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                if (!svg.getAttribute('width')) svg.setAttribute('width', '150'); if (!svg.getAttribute('height')) svg.setAttribute('height', '50');
+                const b64 = btoa(unescape(encodeURIComponent(new XMLSerializer().serializeToString(svg))));
+                const url = 'data:image/svg+xml;base64,' + b64; const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas'); canvas.width = 150; canvas.height = 50;
+                    const ctx = canvas.getContext('2d');
+                    // Fundo escuro universal do Injetor Nuvem
+                    ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,150,50); ctx.drawImage(img,0,0,150,50);
+                    URL.revokeObjectURL(url); resolve(canvas.toDataURL('image/jpeg', 0.9).split(',')[1]);
+                }; img.onerror = () => resolve(b64); img.src = url;
+            } catch(e) { resolve(null); }
         });
     }
 
-    // ==============================================================
-    // 3. A BOLHA M NEON (Mantida como suporte global)
-    // ==============================================================
-    function injetarBolha() {
-        if (document.getElementById('omini-bolha-cloud-wrapper')) return;
+    function solveCaptchaQuintuplo(base64, apikey) {
+        return new Promise((resolveMain) => {
+            let resolvido = false;
 
-        const wrapper = document.createElement('div');
-        wrapper.id = 'omini-bolha-cloud-wrapper';
-        wrapper.style.cssText = `
-            position: fixed !important; top: 135px !important; right: 15px !important;
-            z-index: 2147483647 !important; display: flex; flex-direction: column;
-            align-items: flex-end; gap: 10px; pointer-events: auto !important;
-        `;
+            function contratarUmIndiano() {
+                return new Promise((resolve) => {
+                    GM_xmlhttpRequest({
+                        method: "POST", url: "https://api.2captcha.com/createTask", headers: { "Content-Type": "application/json" },
+                        data: JSON.stringify({ clientKey: apikey, task: { type: "ImageToTextTask", body: base64 } }),
+                        onload: function(res) {
+                            try {
+                                let resIn = JSON.parse(res.responseText); if (resIn.errorId !== 0) return resolve(null);
+                                let taskId = resIn.taskId; let tentativas = 0;
 
-        const bolha = document.createElement('div');
-        bolha.id = 'omini-bolha-cloud-btn';
-        bolha.style.cssText = `
-            width: 48px; height: 48px; border-radius: 50%;
-            background: linear-gradient(135deg, #020617, #1e3a8a);
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer; box-shadow: 0 0 15px rgba(0, 246, 255, 0.6), inset 0 0 8px rgba(0, 246, 255, 0.3);
-            border: 2px solid #00f6ff; transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-            user-select: none; -webkit-tap-highlight-color: transparent;
-        `;
-        bolha.innerHTML = `<span style="font-family: 'Arial Black', sans-serif; font-size: 24px; font-style: italic; color: #00f6ff; text-shadow: 0 0 10px #00f6ff;">M</span>`;
+                                let checkInterval = setInterval(() => {
+                                    if (resolvido) { clearInterval(checkInterval); return resolve(null); }
+                                    tentativas++; if (tentativas > 15) { clearInterval(checkInterval); return resolve(null); }
 
-        bolha.onclick = () => {
-            bolha.style.transform = 'scale(0.8)';
-            setTimeout(() => bolha.style.transform = 'none', 150);
+                                    GM_xmlhttpRequest({
+                                        method: "POST", url: "https://api.2captcha.com/getTaskResult", headers: { "Content-Type": "application/json" },
+                                        data: JSON.stringify({ clientKey: apikey, taskId: taskId }),
+                                        onload: function(resRes) {
+                                            try {
+                                                let jsonRes = JSON.parse(resRes.responseText);
+                                                if (jsonRes.status === 'ready') {
+                                                    clearInterval(checkInterval);
+                                                    let resposta = jsonRes.solution.text.toUpperCase().trim();
 
-            let janelaAberta = document.getElementById('masterx-sync-overlay');
-            if (janelaAberta) {
-                janelaAberta.remove();
-            } else {
-                abrirJanelaSync({usuario: '', senha: '', expFormatada: '', comentario: 'Cloud Player'});
+                                                    // Filtro contra respostas burras
+                                                    if (resposta.match(/^A+$/) || resposta === "111" || resposta === "123" || (resposta.length === 1 && isNaN(resposta))) {
+                                                        resolve(null);
+                                                    } else {
+                                                        resolve(resposta);
+                                                    }
+                                                }
+                                            } catch(e) {}
+                                        }
+                                    });
+                                }, 1500);
+                            } catch(e) { resolve(null); }
+                        }, onerror: () => resolve(null)
+                    });
+                });
             }
-        };
 
-        wrapper.appendChild(bolha);
-        document.documentElement.appendChild(wrapper);
+            let corrida = [contratarUmIndiano(), contratarUmIndiano(), contratarUmIndiano(), contratarUmIndiano(), contratarUmIndiano()];
+            let terminados = 0;
+            corrida.forEach(trabalhador => {
+                trabalhador.then(senha => {
+                    if (senha && !resolvido) {
+                        resolvido = true;
+                        resolveMain(senha);
+                    } else {
+                        terminados++;
+                        if (terminados === 5 && !resolvido) resolveMain(null);
+                    }
+                });
+            });
+        });
     }
-
-    setInterval(() => {
-        injetarBolha();
-        if (window.location.href.includes('client')) {
-            injetarBotoesSniper();
-        }
-    }, 1500);
-
 })();
